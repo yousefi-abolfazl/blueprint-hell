@@ -1,4 +1,4 @@
-package edu.blueprinthell;
+package blueprinthell;
 
 import javax.swing.*;
 import java.awt.*;
