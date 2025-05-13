@@ -5,6 +5,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class SoundManager {
     private static SoundManager INSTANCE;
@@ -16,15 +18,11 @@ public class SoundManager {
     
     private SoundManager() {
         soundClips = new HashMap<>();
-        volume = 1.0f;
+        volume = 0.5f; // Default volume at 50%
         muted = false;
         
-        // Attempt to load sounds
-        try {
-            loadSounds();
-        } catch (Exception e) {
-            System.err.println("Error loading sounds: " + e.getMessage());
-        }
+        // No need to load sounds for now - we'll just use silent versions
+        System.out.println("SoundManager initialized with silent sound mode");
     }
     
     public static SoundManager getInstance() {
@@ -34,104 +32,24 @@ public class SoundManager {
         return INSTANCE;
     }
     
-    private void loadSounds() {
-        // Create sounds directory if it doesn't exist
-        File soundsDir = new File("src/main/resources/sounds");
-        if (!soundsDir.exists()) {
-            soundsDir.mkdirs();
-        }
-        
-        // Load sound effects here when files are available
-        // loadSound("collision", "src/main/resources/sounds/collision.wav");
-        // loadSound("packet_lost", "src/main/resources/sounds/packet_lost.wav");
-        // loadSound("level_complete", "src/main/resources/sounds/level_complete.wav");
-        // loadSound("connection", "src/main/resources/sounds/connection.wav");
-        
-        // Load background music
-        // loadBackgroundMusic("src/main/resources/sounds/background.wav");
-    }
-    
-    private void loadSound(String name, String path) {
-        try {
-            AudioInputStream audioIn = AudioSystem.getAudioInputStream(new File(path));
-            Clip clip = AudioSystem.getClip();
-            clip.open(audioIn);
-            soundClips.put(name, clip);
-        } catch (UnsupportedAudioFileException | IOException | LineUnavailableException e) {
-            System.err.println("Error loading sound file " + path + ": " + e.getMessage());
-        }
-    }
-    
-    private void loadBackgroundMusic(String path) {
-        try {
-            AudioInputStream audioIn = AudioSystem.getAudioInputStream(new File(path));
-            backgroundMusic = AudioSystem.getClip();
-            backgroundMusic.open(audioIn);
-        } catch (UnsupportedAudioFileException | IOException | LineUnavailableException e) {
-            System.err.println("Error loading background music: " + e.getMessage());
-        }
-    }
-    
     public void playSound(String name) {
-        if (muted) return;
-        
-        Clip clip = soundClips.get(name);
-        if (clip != null) {
-            clip.setFramePosition(0);
-            
-            // Apply volume control
-            try {
-                FloatControl gainControl = (FloatControl) clip.getControl(FloatControl.Type.MASTER_GAIN);
-                float range = gainControl.getMaximum() - gainControl.getMinimum();
-                float gain = (range * volume) + gainControl.getMinimum();
-                gainControl.setValue(gain);
-            } catch (Exception e) {
-                System.err.println("Could not set volume for clip: " + e.getMessage());
-            }
-            
-            clip.start();
-        }
+        // Do nothing - silent mode
+        System.out.println("Playing sound (silent mode): " + name);
     }
     
     public void startBackgroundMusic() {
-        if (backgroundMusic != null && !muted) {
-            backgroundMusic.setFramePosition(0);
-            backgroundMusic.loop(Clip.LOOP_CONTINUOUSLY);
-            
-            // Apply volume control
-            try {
-                FloatControl gainControl = (FloatControl) backgroundMusic.getControl(FloatControl.Type.MASTER_GAIN);
-                float range = gainControl.getMaximum() - gainControl.getMinimum();
-                float gain = (range * volume * 0.7f) + gainControl.getMinimum();  // Background music softer than effects
-                gainControl.setValue(gain);
-            } catch (Exception e) {
-                System.err.println("Could not set volume for background music: " + e.getMessage());
-            }
-            
-            backgroundMusic.start();
-        }
+        // Do nothing - silent mode
+        System.out.println("Starting background music (silent mode)");
     }
     
     public void stopBackgroundMusic() {
-        if (backgroundMusic != null) {
-            backgroundMusic.stop();
-        }
+        // Do nothing - silent mode
+        System.out.println("Stopping background music (silent mode)");
     }
     
     public void setVolume(float volume) {
         this.volume = Math.max(0.0f, Math.min(1.0f, volume));
-        
-        // Update volume for background music if playing
-        if (backgroundMusic != null && backgroundMusic.isRunning()) {
-            try {
-                FloatControl gainControl = (FloatControl) backgroundMusic.getControl(FloatControl.Type.MASTER_GAIN);
-                float range = gainControl.getMaximum() - gainControl.getMinimum();
-                float gain = (range * this.volume * 0.7f) + gainControl.getMinimum();
-                gainControl.setValue(gain);
-            } catch (Exception e) {
-                System.err.println("Could not update volume for background music: " + e.getMessage());
-            }
-        }
+        System.out.println("Volume set to: " + this.volume + " (silent mode)");
     }
     
     public float getVolume() {
@@ -140,14 +58,35 @@ public class SoundManager {
     
     public void setMuted(boolean muted) {
         this.muted = muted;
-        if (muted) {
-            stopBackgroundMusic();
-        } else {
-            startBackgroundMusic();
-        }
+        System.out.println("Mute set to: " + this.muted + " (silent mode)");
     }
     
     public boolean isMuted() {
         return muted;
+    }
+    
+    // Power-up timer methods
+    public void scheduleOAtarDeactivation(Runnable onComplete) {
+        System.out.println("Scheduling O'Atar deactivation");
+        Timer timer = new Timer();
+        timer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                onComplete.run();
+                timer.cancel();
+            }
+        }, Constants.O_ATAR_DURATION * 16); // Convert frames to milliseconds (assuming 60 FPS)
+    }
+    
+    public void scheduleOAiryamanDeactivation(Runnable onComplete) {
+        System.out.println("Scheduling O'Airyaman deactivation");
+        Timer timer = new Timer();
+        timer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                onComplete.run();
+                timer.cancel();
+            }
+        }, Constants.O_AIRYAMAN_DURATION * 16); // Convert frames to milliseconds
     }
 } 

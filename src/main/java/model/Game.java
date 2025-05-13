@@ -1,5 +1,8 @@
 package model;
 
+import controller.Constants;
+import controller.SoundManager;
+
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -23,7 +26,7 @@ public class Game {
     private Game() {
         systems = new ArrayList<>();
         wires = new ArrayList<>();
-        remainingWireLength = 1000; // Default starting wire length
+        remainingWireLength = Constants.DEFAULT_REMAINING_WIRE_LENGTH;
         temporalProgress = 0;
         packetLoss = 0;
         coins = 0;
@@ -73,8 +76,30 @@ public class Game {
         checkPacketCollisions();
         
         // Check game over condition
-        if (packetLoss > 50) { // 50% loss threshold
+        if (packetLoss > Constants.PACKET_LOSS_THRESHOLD) {
             isGameOver = true;
+            SoundManager.getInstance().playSound("game_over");
+        }
+        
+        // Check level completion
+        checkLevelCompletion();
+    }
+    
+    private void checkLevelCompletion() {
+        int totalPacketsReceived = 0;
+        int requiredPackets = 0;
+        
+        for (NetworkSystem system : systems) {
+            if (system instanceof DestinationSystem) {
+                totalPacketsReceived += ((DestinationSystem) system).getPacketsReceived();
+                requiredPackets += Constants.PACKETS_REQUIRED_PER_DESTINATION;
+            }
+        }
+        
+        if (totalPacketsReceived >= requiredPackets && !isGameOver) {
+            // Level completed!
+            SoundManager.getInstance().playSound("level_complete");
+            // Let the SceneController handle level completion via its isLevelComplete method
         }
     }
     
@@ -121,6 +146,9 @@ public class Game {
             return;
         }
         
+        // Play collision sound
+        SoundManager.getInstance().playSound("collision");
+        
         // Generate impact effect
         Point collisionPoint = new Point(
             (packet1.getPosition().x + packet2.getPosition().x) / 2,
@@ -128,19 +156,22 @@ public class Game {
         );
         
         // Add noise to both packets
-        packet1.addNoise(2);
-        packet2.addNoise(2);
+        packet1.addNoise(Constants.IMPACT_NOISE_AMOUNT);
+        packet2.addNoise(Constants.IMPACT_NOISE_AMOUNT);
         
         // Check if packets are lost due to noise
         checkPacketLoss(packet1);
         checkPacketLoss(packet2);
         
         // Apply impact to nearby packets
-        applyImpactToNearbyPackets(collisionPoint, 50); // 50 is the impact radius
+        applyImpactToNearbyPackets(collisionPoint, Constants.IMPACT_RADIUS);
     }
     
     private void checkPacketLoss(Packet packet) {
         if (packet.isLost()) {
+            // Play packet lost sound
+            SoundManager.getInstance().playSound("packet_lost");
+            
             // Remove packet from its wire
             for (Wire wire : wires) {
                 if (wire.getPacketsOnWire().contains(packet)) {
@@ -156,7 +187,7 @@ public class Game {
         // For each wire
         for (Wire wire : wires) {
             // For each packet on the wire
-            for (Packet packet : wire.getPacketsOnWire()) {
+            for (Packet packet : new ArrayList<>(wire.getPacketsOnWire())) {
                 Point packetPos = packet.getPosition();
                 
                 // Calculate distance from impact
@@ -182,8 +213,8 @@ public class Game {
                     }
                     
                     // Apply force (move packet)
-                    int moveX = (int) (dx * forceMagnitude * 10);
-                    int moveY = (int) (dy * forceMagnitude * 10);
+                    int moveX = (int) (dx * forceMagnitude * Constants.IMPACT_FORCE_MULTIPLIER);
+                    int moveY = (int) (dy * forceMagnitude * Constants.IMPACT_FORCE_MULTIPLIER);
                     
                     packet.setPosition(new Point(
                         packetPos.x + moveX,
@@ -191,9 +222,10 @@ public class Game {
                     ));
                     
                     // Check if packet was pushed off the wire
-                    if (!wire.isPointNearWire(packet.getPosition(), 10)) {
+                    if (!wire.isPointNearWire(packet.getPosition(), Constants.WIRE_PROXIMITY_THRESHOLD)) {
                         wire.removePacket(packet);
                         packetLoss++;
+                        SoundManager.getInstance().playSound("packet_lost");
                     }
                 }
             }
@@ -213,15 +245,27 @@ public class Game {
     // Power-ups
     public void disableImpact(int duration) {
         impactEffectActive = false;
-        // Would need a timer to re-enable after duration
+        SoundManager.getInstance().playSound("powerup");
+        
+        // Schedule re-enabling of impact after duration
+        SoundManager.getInstance().scheduleOAtarDeactivation(() -> {
+            impactEffectActive = true;
+        });
     }
     
     public void disableCollisions(int duration) {
         collisionDisabled = true;
-        // Would need a timer to re-enable after duration
+        SoundManager.getInstance().playSound("powerup");
+        
+        // Schedule re-enabling of collisions after duration
+        SoundManager.getInstance().scheduleOAiryamanDeactivation(() -> {
+            collisionDisabled = false;
+        });
     }
     
     public void resetAllPacketNoise() {
+        SoundManager.getInstance().playSound("powerup");
+        
         for (Wire wire : wires) {
             for (Packet packet : wire.getPacketsOnWire()) {
                 packet.resetNoise();
@@ -293,9 +337,10 @@ public class Game {
     public void resetGame() {
         systems.clear();
         wires.clear();
-        remainingWireLength = 1000;
+        remainingWireLength = Constants.DEFAULT_REMAINING_WIRE_LENGTH;
         temporalProgress = 0;
         packetLoss = 0;
+        coins = 0;
         isPaused = false;
         isGameOver = false;
         impactEffectActive = true;

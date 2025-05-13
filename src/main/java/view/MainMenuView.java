@@ -5,6 +5,7 @@ import javax.swing.*;
 import java.awt.*;
 import static controller.Constants.GAME_FRAME_DIMENSION;
 import java.awt.geom.RoundRectangle2D;
+import java.awt.image.BufferedImage;
 
 public class MainMenuView extends JPanel{
     private final int cellSize = 50;
@@ -18,6 +19,7 @@ public class MainMenuView extends JPanel{
     private CustomButton exitButton;
     private CustomButton settingsButton;
     private CustomButton gameStagesButton;
+    private CustomButton helpButton;
 
     public MainMenuView() {
         loadBackgroundImage();
@@ -29,15 +31,37 @@ public class MainMenuView extends JPanel{
         try {
             backgroundImage = new ImageIcon(imagePath);
             if (backgroundImage.getIconWidth() <= 0) {
-                System.err.println("Failed to load image: " + imagePath);
+                System.err.println("Failed to load image: " + imagePath + ". Creating placeholder.");
+                createPlaceholderImage();
             }
         } catch (Exception e) {
-            System.err.println("Error loading image: " + e.getMessage());
+            System.err.println("Error loading image: " + e.getMessage() + ". Creating placeholder.");
+            createPlaceholderImage();
         }
         imageHeight = (int) GAME_FRAME_DIMENSION.getWidth() / 7;
         imageWidth = (int) GAME_FRAME_DIMENSION.getWidth() / 2 + 80;
         imageX = (int) GAME_FRAME_DIMENSION.getWidth() / 2 - imageWidth / 2;
         imageY = 10;
+    }
+    
+    private void createPlaceholderImage() {
+        int width = 800;
+        int height = 200;
+        BufferedImage img = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g2d = img.createGraphics();
+        
+        g2d.setColor(new Color(30, 30, 60));
+        g2d.fillRect(0, 0, width, height);
+        
+        g2d.setColor(Color.WHITE);
+        g2d.setFont(new Font("Arial", Font.BOLD, 48));
+        FontMetrics fm = g2d.getFontMetrics();
+        String title = "Blueprint Hell";
+        int textWidth = fm.stringWidth(title);
+        g2d.drawString(title, (width - textWidth) / 2, height / 2);
+        
+        g2d.dispose();
+        backgroundImage = new ImageIcon(img);
     }
     
     @Override
@@ -89,16 +113,19 @@ public class MainMenuView extends JPanel{
         exitButton = new CustomButton("Exit");
         settingsButton = new CustomButton("Settings");
         gameStagesButton = new CustomButton("Stages");
+        helpButton = new CustomButton("How to Play");
 
         startGameButton.setBounds(centerX - buttonWidth/2, startY, buttonWidth, buttonHeight);
         exitButton.setBounds(2 * centerX - buttonWidth/2 - 3 * gap , imageY + imageHeight / 2 - buttonHeight /2, buttonWidth, buttonHeight);
         settingsButton.setBounds(buttonWidth/2 + gap, imageY + imageHeight / 2 - buttonHeight / 2, buttonWidth, buttonHeight);
         gameStagesButton.setBounds(centerX - buttonWidth/2 + gap + 20, startY, buttonWidth, buttonHeight);
+        helpButton.setBounds(centerX - buttonWidth/2, startY + buttonHeight + 20, buttonWidth, buttonHeight);
 
         add(startGameButton);
         add(exitButton);
         add(settingsButton);
         add(gameStagesButton);
+        add(helpButton);
 
         // Add button actions
         startGameButton.addActionListener(e -> {
@@ -117,6 +144,10 @@ public class MainMenuView extends JPanel{
         gameStagesButton.addActionListener(e -> {
             // Show level selection dialog
             showLevelSelectionDialog();
+        });
+        
+        helpButton.addActionListener(e -> {
+            showHelpDialog();
         });
     }
     
@@ -176,6 +207,63 @@ public class MainMenuView extends JPanel{
         
         levelDialog.add(panel);
         levelDialog.setVisible(true);
+    }
+
+    private void showHelpDialog() {
+        JDialog helpDialog = new JDialog(GameFrame.getINSTANCE(), "How to Play", true);
+        helpDialog.setSize(600, 500);
+        helpDialog.setLocationRelativeTo(this);
+        
+        JPanel panel = new JPanel();
+        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+        panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        
+        JTextArea helpText = new JTextArea(
+            "BLUEPRINT HELL - GAME INSTRUCTIONS\n\n" +
+            "OBJECTIVE:\n" +
+            "Connect network systems to guide packets from source to destination while minimizing packet loss.\n\n" +
+            "BUILDING PHASE:\n" +
+            "1. Connect output ports (RED) to input ports (GREEN) by:\n" +
+            "   - Click on an output port\n" +
+            "   - Drag to an input port\n" +
+            "   - Release to create a wire connection\n" +
+            "2. You have limited wire length shown in the HUD\n\n" +
+            "SIMULATION PHASE:\n" +
+            "1. Press SPACE to start the simulation\n" +
+            "2. Watch packets flow through your network\n" +
+            "3. Try to avoid packet collisions\n\n" +
+            "CONTROLS:\n" +
+            "- SPACE: Toggle simulation play/pause\n" +
+            "- RIGHT ARROW: Advance time (when paused)\n" +
+            "- LEFT ARROW: Rewind time (when paused)\n" +
+            "- H: Toggle HUD visibility\n" +
+            "- S: Open shop (during gameplay)\n" +
+            "- ESC: Stop simulation\n\n" +
+            "GAME OVER:\n" +
+            "If packet loss exceeds 50%, you lose the level.\n\n" +
+            "LEVEL COMPLETION:\n" +
+            "Each destination system needs to receive 5 packets to complete the level."
+        );
+        
+        helpText.setEditable(false);
+        helpText.setLineWrap(true);
+        helpText.setWrapStyleWord(true);
+        helpText.setFont(new Font("SansSerif", Font.PLAIN, 14));
+        
+        JScrollPane scrollPane = new JScrollPane(helpText);
+        scrollPane.setPreferredSize(new Dimension(550, 400));
+        
+        panel.add(scrollPane);
+        
+        JButton closeButton = new JButton("Close");
+        closeButton.addActionListener(e -> helpDialog.dispose());
+        
+        JPanel buttonPanel = new JPanel();
+        buttonPanel.add(closeButton);
+        panel.add(buttonPanel);
+        
+        helpDialog.add(panel);
+        helpDialog.setVisible(true);
     }
 
     class CustomButton extends JButton {
