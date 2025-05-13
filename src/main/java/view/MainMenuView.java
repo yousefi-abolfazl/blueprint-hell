@@ -1,11 +1,10 @@
 package view;
 
-
+import controller.SceneController;
 import javax.swing.*;
 import java.awt.*;
 import static controller.Constants.GAME_FRAME_DIMENSION;
 import java.awt.geom.RoundRectangle2D;
-
 
 public class MainMenuView extends JPanel{
     private final int cellSize = 50;
@@ -39,7 +38,6 @@ public class MainMenuView extends JPanel{
         imageWidth = (int) GAME_FRAME_DIMENSION.getWidth() / 2 + 80;
         imageX = (int) GAME_FRAME_DIMENSION.getWidth() / 2 - imageWidth / 2;
         imageY = 10;
-
     }
     
     @Override
@@ -73,6 +71,7 @@ public class MainMenuView extends JPanel{
         g2d.drawImage(backgroundImage.getImage(), imageX, imageY, imageWidth, imageHeight, this);
         g2d.setClip(null);
     }
+    
     public void setupMainMenu() {
         setLayout(null);
         setSize(GAME_FRAME_DIMENSION);
@@ -99,13 +98,84 @@ public class MainMenuView extends JPanel{
         add(startGameButton);
         add(exitButton);
         add(settingsButton);
-        //add(gameStagesButton);
+        add(gameStagesButton);
 
-        exitButton.addActionListener(al -> System.exit(0));    
-
+        // Add button actions
+        startGameButton.addActionListener(e -> {
+            SceneController.getInstance().startGame();
+        });
         
+        exitButton.addActionListener(e -> {
+            SceneController.getInstance().exitGame();
+        });
         
-
+        settingsButton.addActionListener(e -> {
+            // Show settings dialog
+            showSettingsDialog();
+        });
+        
+        gameStagesButton.addActionListener(e -> {
+            // Show level selection dialog
+            showLevelSelectionDialog();
+        });
+    }
+    
+    private void showSettingsDialog() {
+        JDialog settingsDialog = new JDialog(GameFrame.getINSTANCE(), "Settings", true);
+        settingsDialog.setSize(400, 300);
+        settingsDialog.setLocationRelativeTo(this);
+        
+        JPanel panel = new JPanel();
+        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+        
+        // Volume slider
+        JLabel volumeLabel = new JLabel("Volume");
+        JSlider volumeSlider = new JSlider(0, 100, 50);
+        volumeSlider.setMajorTickSpacing(25);
+        volumeSlider.setPaintTicks(true);
+        volumeSlider.setPaintLabels(true);
+        
+        // Add components to panel
+        panel.add(Box.createVerticalGlue());
+        panel.add(volumeLabel);
+        panel.add(volumeSlider);
+        panel.add(Box.createVerticalGlue());
+        
+        // Close button
+        JButton closeButton = new JButton("Close");
+        closeButton.addActionListener(e -> settingsDialog.dispose());
+        panel.add(closeButton);
+        
+        settingsDialog.add(panel);
+        settingsDialog.setVisible(true);
+    }
+    
+    private void showLevelSelectionDialog() {
+        JDialog levelDialog = new JDialog(GameFrame.getINSTANCE(), "Select Level", true);
+        levelDialog.setSize(400, 300);
+        levelDialog.setLocationRelativeTo(this);
+        
+        JPanel panel = new JPanel(new GridLayout(2, 1, 10, 10));
+        panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        
+        JButton level1Button = new JButton("Level 1");
+        JButton level2Button = new JButton("Level 2");
+        
+        level1Button.addActionListener(e -> {
+            SceneController.getInstance().startLevel(1);
+            levelDialog.dispose();
+        });
+        
+        level2Button.addActionListener(e -> {
+            SceneController.getInstance().startLevel(2);
+            levelDialog.dispose();
+        });
+        
+        panel.add(level1Button);
+        panel.add(level2Button);
+        
+        levelDialog.add(panel);
+        levelDialog.setVisible(true);
     }
 
     class CustomButton extends JButton {

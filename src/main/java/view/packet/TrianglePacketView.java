@@ -7,6 +7,8 @@ import static controller.Constants.PACKET_TRIANGLE_THICKNESS;
 import java.awt.*;
 
 public class TrianglePacketView extends PacketView {
+    private Point location;
+
     public TrianglePacketView() {
         this.size = PACKET_TRIANGLE_SIZE;
         this.color = PACKET_TRIANGLE_COLOR;
@@ -15,6 +17,7 @@ public class TrianglePacketView extends PacketView {
 
     @Override
     public void render(Graphics g, int x, int y) {
+        location = new Point(x, y);
         Graphics2D g2d = (Graphics2D) g;
 
         double[] xPoints = { x + size / (2 * Math.cos(Math.PI/6)), x - size / (4 * Math.cos(Math.PI/6)),
@@ -34,5 +37,12 @@ public class TrianglePacketView extends PacketView {
         g2d.setStroke(new BasicStroke(thickness, BasicStroke.CAP_ROUND, BasicStroke.JOIN_MITER));
         g2d.setColor(color);
         g2d.draw(path);
+    }
+
+    public Point getLocation(){
+        if (location == null){
+            return new Point(0, 0);
+        }
+        return location;
     }
 }

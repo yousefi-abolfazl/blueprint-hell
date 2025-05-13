@@ -6,6 +6,7 @@ import static controller.Constants.PACKET_SQUARE_THICKNESS;
 import java.awt.*;
 
 public class SquarePacketView extends PacketView {
+    private Point location;
     public SquarePacketView() {
         this.size = PACKET_SQUARE_SIZE;
         this.color = PACKET_SQUARE_COLOR;
@@ -14,7 +15,9 @@ public class SquarePacketView extends PacketView {
 
     @Override
     public void render(Graphics g, int x, int y) {
+        location = new Point(x, y);
         Graphics2D g2d = (Graphics2D) g;
+
         int[] xPoints = { x - size / 2, x + size / 2, x + size / 2, x - size / 2 };
         int[] yPoints = { y - size / 2, y - size / 2, y + size / 2, y + size / 2 };
 
@@ -31,5 +34,12 @@ public class SquarePacketView extends PacketView {
         g2d.setStroke(new BasicStroke(thickness, BasicStroke.CAP_ROUND, BasicStroke.JOIN_MITER));
         g2d.setColor(color);
         g2d.draw(path);
+    }
+
+    public Point getLocation(){
+        if (location == null){
+            return new Point(0, 0);
+        }
+        return location;
     }
 }

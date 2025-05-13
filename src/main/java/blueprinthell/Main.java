@@ -1,15 +1,15 @@
 package blueprinthell;
 
-import javax.swing.*;
+import controller.SceneController;
 import view.GameFrame;
-import view.MainMenuView;
+
+import javax.swing.*;
 
 public class Main {
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
-            MainMenuView mainMenu = new MainMenuView();
-            GameFrame.getINSTANCE().add(mainMenu);
-            GameFrame.getINSTANCE().repaint();
+            GameFrame.getINSTANCE(); // Initialize the game frame
+            SceneController.getInstance(); // Initialize the scene controller
         });
     }
 }
