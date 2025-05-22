@@ -606,11 +606,15 @@ public class GamePanel extends JPanel {
         if (isGameRunning) {
             System.out.println("Game started running");
             
-            // Make sure source systems are active
+            // Make sure all source systems are active
             for (NetworkSystem system : systems) {
                 if (system instanceof SourceSystem) {
                     System.out.println("Activating source system");
                     system.setActive(true);
+                    
+                    // Force an initial packet generation to kickstart the process
+                    SourceSystem sourceSystem = (SourceSystem) system;
+                    sourceSystem.forceGeneratePacket();
                 }
             }
             
@@ -659,12 +663,18 @@ public class GamePanel extends JPanel {
             // Update all systems directly in addition to calling game.update()
             for (NetworkSystem system : systems) {
                 System.out.println("Updating system: " + system.getClass().getSimpleName());
+                if (system instanceof SourceSystem) {
+                    // Ensure source systems are always active when game is running
+                    system.setActive(true);
+                    System.out.println("Ensuring source system is active");
+                }
                 system.update();
             }
             
-            // Update all wires directly
+            // Update all wires directly and log their packet counts
             for (Wire wire : wires) {
-                System.out.println("Updating wire...");
+                int packetCount = wire.getPacketsOnWire().size();
+                System.out.println("Updating wire with " + packetCount + " packets");
                 wire.update();
             }
             

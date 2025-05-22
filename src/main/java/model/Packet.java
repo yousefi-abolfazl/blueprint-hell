@@ -108,27 +108,39 @@ public abstract class Packet {
             currentSpeed = Math.max(0, currentSpeed - deceleration);
         }
         
-        // Move packet based on velocity and current speed
-        double newX = position.x + (velocityX * currentSpeed);
-        double newY = position.y + (velocityY * currentSpeed);
-        position = new Point((int)newX, (int)newY);
+        // Calculate actual distance to move this frame
+        double moveDistance = currentSpeed;
         
-        // Check if we're close to target
-        double distanceToTarget = Math.sqrt(
-            Math.pow(targetPosition.x - position.x, 2) + 
-            Math.pow(targetPosition.y - position.y, 2)
-        );
+        // Calculate direction vector
+        double dx = targetPosition.x - position.x;
+        double dy = targetPosition.y - position.y;
+        double distance = Math.sqrt(dx * dx + dy * dy);
         
-        // Start decelerating when we're getting close to the target
-        if (distanceToTarget < 50) {
-            isAccelerating = false;
-        }
-        
-        // Stop when we reach target or have stopped
-        if (distanceToTarget < 5 || currentSpeed <= 0) {
-            position = targetPosition;
+        // Check if we've reached the destination
+        if (distance <= moveDistance) {
+            // We've arrived at the destination
+            position = new Point(targetPosition);
             stopMoving();
+            System.out.println("Packet arrived at destination");
+            return;
         }
+        
+        // Normalize direction vector
+        dx = (dx / distance);
+        dy = (dy / distance);
+        
+        // Calculate new position
+        int newX = position.x + (int)(dx * moveDistance);
+        int newY = position.y + (int)(dy * moveDistance);
+        
+        // Set new position
+        position = new Point(newX, newY);
+        
+        // Debug output
+        System.out.println("Packet moved to: " + position.x + "," + position.y + 
+                          " (speed=" + currentSpeed + ", distance to target=" + 
+                          Math.sqrt(Math.pow(targetPosition.x - position.x, 2) + 
+                                   Math.pow(targetPosition.y - position.y, 2)) + ")");
     }
     
     public void stopMoving() {

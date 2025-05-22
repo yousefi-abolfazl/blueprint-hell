@@ -10,8 +10,8 @@ public class Constants {
     // Packets
     public static final int PACKET_SQUARE_SIZE = 2;
     public static final int PACKET_TRIANGLE_SIZE = 3;
-    public static final Color PACKET_SQUARE_COLOR = Color.BLUE;
-    public static final Color PACKET_TRIANGLE_COLOR = Color.YELLOW;
+    public static final Color PACKET_SQUARE_COLOR = new Color(25, 118, 210);  // Nicer blue
+    public static final Color PACKET_TRIANGLE_COLOR = new Color(255, 193, 7); // Amber for triangles
     public static final int PACKET_SQUARE_THICKNESS = 2;
     public static final int PACKET_TRIANGLE_THICKNESS = 2;
     public static final int PACKET_SQUARE_SPEED = 7;
@@ -40,10 +40,10 @@ public class Constants {
     
     // Game Mechanics
     public static final int IMPACT_RADIUS = 50;
-    public static final int IMPACT_NOISE_AMOUNT = 5;
+    public static final int IMPACT_NOISE_AMOUNT = 1;
     public static final int IMPACT_FORCE_MULTIPLIER = 10;
-    public static final int WIRE_PROXIMITY_THRESHOLD = 10;
-    public static final int PACKET_LOSS_THRESHOLD = 20; // 20% loss threshold
+    public static final int WIRE_PROXIMITY_THRESHOLD = 20;
+    public static final int PACKET_LOSS_THRESHOLD = 50; // 50% loss threshold
     
     // Power-up durations (in frames, 60 frames = 1 second at 60fps)
     public static final int O_ATAR_DURATION = 600; // 10 seconds

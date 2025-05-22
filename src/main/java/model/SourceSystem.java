@@ -89,23 +89,28 @@ public class SourceSystem extends NetworkSystem {
         Packet newPacket;
         if (isSquarePacketGenerator) {
             newPacket = new SquarePacket(packetPosition);
-            System.out.println("Created a square packet");
+            System.out.println("Created a square packet with size " + newPacket.getSize());
         } else {
             newPacket = new TrianglePacket(packetPosition);
-            System.out.println("Created a triangle packet");
+            System.out.println("Created a triangle packet with size " + newPacket.getSize());
         }
+        
+        // Set source port on the packet
+        newPacket.setSourcePort(outputPort);
         
         // افزایش شمارنده‌های پکت
         localPacketsGenerated++;
         Game.getInstance().incrementTotalPacketsGenerated();
         System.out.println("Packet #" + localPacketsGenerated + " created by this source. Total packets in game: " + 
-                          Game.getInstance().getTotalPacketsGenerated());
+                          Game.getInstance().getTotalPacketsGenerated() + 
+                          ", Lost packets: " + Game.getInstance().getTotalPacketsLost() + 
+                          ", Current loss %: " + Game.getInstance().getPacketLoss());
         
-        // Send the packet through any connected wire
+        // Find connected wire and send packet through it
         boolean packetSent = false;
         for (Wire wire : Game.getInstance().getWires()) {
             if (wire.getSourcePort() == outputPort) {
-                System.out.println("Sending packet from source system through wire");
+                System.out.println("Found wire connected to output port. Adding packet to wire.");
                 wire.addPacket(newPacket);
                 packetSent = true;
                 break;
@@ -113,7 +118,9 @@ public class SourceSystem extends NetworkSystem {
         }
         
         if (!packetSent) {
-            System.out.println("No wire connected to output port - packet not sent");
+            System.err.println("WARNING: No wire connected to output port - packet not sent");
+            // If a packet is created but cannot be sent, don't count it as lost
+            Game.getInstance().decrementTotalPacketsGenerated();
         }
     }
     

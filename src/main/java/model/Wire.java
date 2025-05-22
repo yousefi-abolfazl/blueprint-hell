@@ -41,8 +41,13 @@ public class Wire {
         // رندر وایر به صورت متفاوت وقتی پکت روی آن است
         if (!packetsOnWire.isEmpty()) {
             // وایر با پکت - نمایش با یک تابش نور آبی کمرنگ
-            g.setColor(new Color(100, 200, 255, 180)); // آبی روشن با شفافیت
-            g.setStroke(new BasicStroke(Constants.WIRE_THICKNESS));
+            g.setColor(new Color(100, 200, 255, 220)); // آبی روشن با شفافیت بیشتر
+            g.setStroke(new BasicStroke(Constants.WIRE_THICKNESS + 2)); // ضخیم‌تر کردن سیم با پکت
+            g.drawLine(source.x, source.y, destination.x, destination.y);
+            
+            // Add pulsing effect - draw a wider, more transparent line
+            g.setColor(new Color(100, 200, 255, 80));
+            g.setStroke(new BasicStroke(Constants.WIRE_THICKNESS + 4));
             g.drawLine(source.x, source.y, destination.x, destination.y);
         }
         
@@ -55,8 +60,24 @@ public class Wire {
         g.setStroke(originalStroke);
         g.setColor(originalColor);
         
-        // رندر همه پکت‌های روی وایر
+        // DEBUG: Draw dots every 20 pixels along the wire to visualize path
+        double totalLength = Math.sqrt(Math.pow(destination.x - source.x, 2) + Math.pow(destination.y - source.y, 2));
+        if (totalLength > 0) {
+            double stepSize = 20;
+            double dx = (destination.x - source.x) / totalLength;
+            double dy = (destination.y - source.y) / totalLength;
+            
+            for (double step = 0; step < totalLength; step += stepSize) {
+                int dotX = (int)(source.x + dx * step);
+                int dotY = (int)(source.y + dy * step);
+                g.setColor(Color.DARK_GRAY);
+                g.fillOval(dotX - 1, dotY - 1, 3, 3);
+            }
+        }
+        
+        // رندر همه پکت‌های روی وایر - with minimal design
         for (Packet packet : packetsOnWire) {
+            // No highlight, just render the packet itself
             packet.render(g);
         }
     }
@@ -64,15 +85,22 @@ public class Wire {
     public void update() {
         // Update all packets on the wire using their physics-based movement
         for (Packet packet : new ArrayList<>(packetsOnWire)) {
-            // First check if the packet is actually moving
+            // Debug packet position before update
+            System.out.println("Packet before update: " + packet.getPosition().x + "," + packet.getPosition().y);
+            
+            // If the packet is not moving, start moving it toward the destination
             if (!packet.isMoving()) {
-                // If the packet is not moving, start moving it toward the destination
-                System.out.println("Starting packet movement on wire");
+                System.out.println("Starting packet movement on wire from " + sourcePort.getPosition().x + "," + sourcePort.getPosition().y +
+                                  " to " + destinationPort.getPosition().x + "," + destinationPort.getPosition().y);
                 packet.startMoving(destinationPort.getPosition(), sourcePort);
             }
             
             // Now update the packet's position based on physics
             packet.update();
+            
+            // Debug packet position after update
+            System.out.println("Packet after update: " + packet.getPosition().x + "," + packet.getPosition().y + 
+                              ", isMoving: " + packet.isMoving() + ", speed: " + packet.getCurrentSpeed());
             
             // Check if packet has reached destination
             double distanceToTarget = Math.sqrt(
@@ -80,9 +108,13 @@ public class Wire {
                 Math.pow(destinationPort.getPosition().y - packet.getPosition().y, 2)
             );
             
-            if (distanceToTarget < 5 || !packet.isMoving()) {
-                // Send the packet to the destination system
-                System.out.println("Packet reached destination port");
+            System.out.println("Distance to destination: " + distanceToTarget);
+            
+            // Use a more reliable way to detect arrival - either very close or stopped moving
+            if (distanceToTarget < 10) {
+                System.out.println("Packet reached destination port!");
+                // Set position exactly to destination to avoid floating point errors
+                packet.setPosition(new Point(destinationPort.getPosition()));
                 destinationPort.getParentSystem().receivePacket(packet);
                 removePacket(packet);
             }

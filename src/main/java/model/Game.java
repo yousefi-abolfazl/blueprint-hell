@@ -176,9 +176,33 @@ public class Game {
             (packet1.getPosition().y + packet2.getPosition().y) / 2
         );
         
-        // Add noise to both packets
-        packet1.addNoise(Constants.IMPACT_NOISE_AMOUNT);
-        packet2.addNoise(Constants.IMPACT_NOISE_AMOUNT);
+        System.out.println("Collision between packets at " + collisionPoint.x + "," + collisionPoint.y);
+        System.out.println("Packet 1: size=" + packet1.getSize() + ", noise=" + packet1.getNoise());
+        System.out.println("Packet 2: size=" + packet2.getSize() + ", noise=" + packet2.getNoise());
+        
+        // Add noise carefully - ensure we don't immediately lose packets if they're at size-1 noise
+        if (packet1.getNoise() + Constants.IMPACT_NOISE_AMOUNT >= packet1.getSize() &&
+            packet2.getNoise() + Constants.IMPACT_NOISE_AMOUNT >= packet2.getSize()) {
+            // Both packets would be lost - add less noise to one of them randomly
+            if (Math.random() < 0.5) {
+                // Add full noise to packet1, reduced noise to packet2
+                packet1.addNoise(Constants.IMPACT_NOISE_AMOUNT);
+                packet2.addNoise(Math.max(0, packet2.getSize() - packet2.getNoise() - 1));
+                System.out.println("Reduced noise for packet 2 to prevent simultaneous loss");
+            } else {
+                // Add full noise to packet2, reduced noise to packet1
+                packet2.addNoise(Constants.IMPACT_NOISE_AMOUNT);
+                packet1.addNoise(Math.max(0, packet1.getSize() - packet1.getNoise() - 1));
+                System.out.println("Reduced noise for packet 1 to prevent simultaneous loss");
+            }
+        } else {
+            // Regular noise addition
+            packet1.addNoise(Constants.IMPACT_NOISE_AMOUNT);
+            packet2.addNoise(Constants.IMPACT_NOISE_AMOUNT);
+        }
+        
+        System.out.println("After collision - Packet 1: noise=" + packet1.getNoise());
+        System.out.println("After collision - Packet 2: noise=" + packet2.getNoise());
         
         // Check if packets are lost due to noise
         checkPacketLoss(packet1);
@@ -410,6 +434,13 @@ public class Game {
         updatePacketLossPercentage();
     }
     
+    public void decrementTotalPacketsGenerated() {
+        if (totalPacketsGenerated > 0) {
+            totalPacketsGenerated--;
+            updatePacketLossPercentage();
+        }
+    }
+    
     public int getTotalPacketsGenerated() {
         return totalPacketsGenerated;
     }
@@ -420,7 +451,20 @@ public class Game {
     
     private void updatePacketLossPercentage() {
         if (totalPacketsGenerated > 0) {
+            int oldPacketLoss = packetLoss;
             packetLoss = (totalPacketsLost * 100) / totalPacketsGenerated;
+            
+            // Debug output to understand the calculation
+            System.out.println("PACKET LOSS CALCULATION: Lost=" + totalPacketsLost + 
+                              ", Generated=" + totalPacketsGenerated + 
+                              ", Old percentage=" + oldPacketLoss +
+                              ", New percentage=" + packetLoss);
+                              
+            // Check if we just crossed the game over threshold
+            if (packetLoss >= Constants.PACKET_LOSS_THRESHOLD && oldPacketLoss < Constants.PACKET_LOSS_THRESHOLD) {
+                System.out.println("WARNING: Packet loss has reached " + packetLoss + "%, which exceeds threshold of " + 
+                                  Constants.PACKET_LOSS_THRESHOLD + "%");
+            }
         } else {
             packetLoss = 0;
         }
