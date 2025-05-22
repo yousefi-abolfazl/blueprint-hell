@@ -41,6 +41,8 @@ public class SceneController {
     }
     
     private void updateGame() {
+        System.out.println("SceneController.updateGame() called at " + System.currentTimeMillis());
+        
         // Call the GamePanel update method directly
         GamePanel.getInstance().update();
         
@@ -97,27 +99,24 @@ public class SceneController {
         // Make sure panel gets focus so keyboard controls work
         SwingUtilities.invokeLater(() -> {
             GamePanel panel = GamePanel.getInstance();
-            panel.requestFocusInWindow();
-            
-            // First try this
-            if (!panel.hasFocus()) {
-                System.out.println("First focus attempt failed, trying again...");
-                panel.requestFocus();
-            }
-            
-            // If that didn't work, try with a delay
-            if (!panel.hasFocus()) {
-                System.out.println("Second focus attempt failed, trying with delay...");
-                Timer focusTimer = new Timer(100, e -> {
-                    panel.requestFocusInWindow();
-                    ((Timer)e.getSource()).stop();
-                });
-                focusTimer.setRepeats(false);
-                focusTimer.start();
-            }
+            // Force focus multiple times with delays
+            forceFocusWithDelay(panel, 0);
+            forceFocusWithDelay(panel, 100);
+            forceFocusWithDelay(panel, 500);
+            forceFocusWithDelay(panel, 1000);
         });
         
         SoundManager.getInstance().startBackgroundMusic();
+    }
+    
+    private void forceFocusWithDelay(GamePanel panel, int delay) {
+        Timer timer = new Timer(delay, e -> {
+            System.out.println("Forcing focus after " + delay + "ms delay");
+            panel.forceFocus();
+            ((Timer)e.getSource()).stop();
+        });
+        timer.setRepeats(false);
+        timer.start();
     }
     
     public void startLevel(int level) {
@@ -131,24 +130,11 @@ public class SceneController {
         // Make sure panel gets focus so keyboard controls work
         SwingUtilities.invokeLater(() -> {
             GamePanel panel = GamePanel.getInstance();
-            panel.requestFocusInWindow();
-            
-            // First try this
-            if (!panel.hasFocus()) {
-                System.out.println("First focus attempt failed, trying again...");
-                panel.requestFocus();
-            }
-            
-            // If that didn't work, try with a delay
-            if (!panel.hasFocus()) {
-                System.out.println("Second focus attempt failed, trying with delay...");
-                Timer focusTimer = new Timer(100, e -> {
-                    panel.requestFocusInWindow();
-                    ((Timer)e.getSource()).stop();
-                });
-                focusTimer.setRepeats(false);
-                focusTimer.start();
-            }
+            // Force focus multiple times with delays
+            forceFocusWithDelay(panel, 0);
+            forceFocusWithDelay(panel, 100);
+            forceFocusWithDelay(panel, 500);
+            forceFocusWithDelay(panel, 1000);
         });
         
         SoundManager.getInstance().startBackgroundMusic();

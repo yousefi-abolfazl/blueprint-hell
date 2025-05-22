@@ -5,6 +5,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.WindowEvent;
 
 public class ShopView extends JDialog {
     private Game game;
@@ -14,11 +15,21 @@ public class ShopView extends JDialog {
         super(parent, "Shop", true);
         this.game = Game.getInstance();
         
+        System.out.println("Opening Shop View with " + game.getCoins() + " coins");
+        
         setSize(400, 300);
         setLocationRelativeTo(parent);
         setLayout(new BorderLayout());
         
         initializeComponents();
+    }
+    
+    @Override
+    public void setVisible(boolean visible) {
+        if (visible) {
+            System.out.println("Shop View becoming visible");
+        }
+        super.setVisible(visible);
     }
     
     private void initializeComponents() {
@@ -44,7 +55,10 @@ public class ShopView extends JDialog {
         
         // Close button
         JButton closeButton = new JButton("Close");
-        closeButton.addActionListener(e -> dispose());
+        closeButton.addActionListener(e -> {
+            System.out.println("Shop View: Close button clicked");
+            dispose();
+        });
         
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
         buttonPanel.add(closeButton);
@@ -99,18 +113,21 @@ public class ShopView extends JDialog {
     private void purchaseOAtar() {
         if (game.spendCoins(3)) {
             game.disableImpact(10);
+            controller.SoundManager.getInstance().playSound("powerup");
         }
     }
     
     private void purchaseOAiryaman() {
         if (game.spendCoins(4)) {
             game.disableCollisions(5);
+            controller.SoundManager.getInstance().playSound("powerup");
         }
     }
     
     private void purchaseOAnahita() {
         if (game.spendCoins(5)) {
             game.resetAllPacketNoise();
+            controller.SoundManager.getInstance().playSound("powerup");
         }
     }
 } 

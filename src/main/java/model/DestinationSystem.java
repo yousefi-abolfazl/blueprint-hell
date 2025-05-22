@@ -44,9 +44,19 @@ public class DestinationSystem extends NetworkSystem {
         // They just count the received packets
     }
     
+    @Override
     public void receivePacket(Packet packet) {
         packetsReceived++;
-        // We could add more logic here, like checking if the packet is of the correct type
+        System.out.println("Destination system received packet #" + packetsReceived);
+        
+        // Add coins for the received packet
+        Game.getInstance().addCoins(packet.getCoinValue());
+        
+        // Set the system as active when receiving packets
+        setActive(true);
+        
+        // Play a sound when a packet is received
+        controller.SoundManager.getInstance().playSound("connection");
     }
     
     public int getPacketsReceived() {

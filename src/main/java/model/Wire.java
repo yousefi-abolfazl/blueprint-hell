@@ -31,17 +31,61 @@ public class Wire {
     }
     
     public void render(Graphics2D g) {
-        g.setColor(color);
-        g.setStroke(new BasicStroke(Constants.WIRE_THICKNESS));
-        
         Point source = sourcePort.getPosition();
         Point destination = destinationPort.getPosition();
         
+        // ذخیره‌سازی وضعیت فعلی گرافیک
+        Stroke originalStroke = g.getStroke();
+        Color originalColor = g.getColor();
+        
+        // رندر وایر به صورت متفاوت وقتی پکت روی آن است
+        if (!packetsOnWire.isEmpty()) {
+            // وایر با پکت - نمایش با یک تابش نور آبی کمرنگ
+            g.setColor(new Color(100, 200, 255, 180)); // آبی روشن با شفافیت
+            g.setStroke(new BasicStroke(Constants.WIRE_THICKNESS));
+            g.drawLine(source.x, source.y, destination.x, destination.y);
+        }
+        
+        // رندر معمولی وایر
+        g.setColor(color);
+        g.setStroke(new BasicStroke(Constants.WIRE_THICKNESS));
         g.drawLine(source.x, source.y, destination.x, destination.y);
         
-        // Render packets on the wire
+        // بازگرداندن وضعیت اصلی گرافیک
+        g.setStroke(originalStroke);
+        g.setColor(originalColor);
+        
+        // رندر همه پکت‌های روی وایر
         for (Packet packet : packetsOnWire) {
             packet.render(g);
+        }
+    }
+    
+    public void update() {
+        // Update all packets on the wire using their physics-based movement
+        for (Packet packet : new ArrayList<>(packetsOnWire)) {
+            // First check if the packet is actually moving
+            if (!packet.isMoving()) {
+                // If the packet is not moving, start moving it toward the destination
+                System.out.println("Starting packet movement on wire");
+                packet.startMoving(destinationPort.getPosition(), sourcePort);
+            }
+            
+            // Now update the packet's position based on physics
+            packet.update();
+            
+            // Check if packet has reached destination
+            double distanceToTarget = Math.sqrt(
+                Math.pow(destinationPort.getPosition().x - packet.getPosition().x, 2) + 
+                Math.pow(destinationPort.getPosition().y - packet.getPosition().y, 2)
+            );
+            
+            if (distanceToTarget < 5 || !packet.isMoving()) {
+                // Send the packet to the destination system
+                System.out.println("Packet reached destination port");
+                destinationPort.getParentSystem().receivePacket(packet);
+                removePacket(packet);
+            }
         }
     }
     
@@ -66,7 +110,9 @@ public class Wire {
     }
     
     public void addPacket(Packet packet) {
+        packet.setSourcePort(sourcePort);
         packetsOnWire.add(packet);
+        packet.startMoving(destinationPort.getPosition(), sourcePort);
     }
     
     public void removePacket(Packet packet) {

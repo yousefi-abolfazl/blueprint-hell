@@ -12,10 +12,10 @@ public class Constants {
     public static final int PACKET_TRIANGLE_SIZE = 3;
     public static final Color PACKET_SQUARE_COLOR = Color.BLUE;
     public static final Color PACKET_TRIANGLE_COLOR = Color.YELLOW;
-    public static final int PACKET_SQUARE_THICKNESS = 4;
-    public static final int PACKET_TRIANGLE_THICKNESS = 4;
-    public static final int PACKET_SQUARE_SPEED = 5;
-    public static final int PACKET_TRIANGLE_SPEED = 3;
+    public static final int PACKET_SQUARE_THICKNESS = 2;
+    public static final int PACKET_TRIANGLE_THICKNESS = 2;
+    public static final int PACKET_SQUARE_SPEED = 7;
+    public static final int PACKET_TRIANGLE_SPEED = 5;
     
     // Network Systems
     public static final int STANDARD_SYSTEM_STORAGE = 5;
@@ -40,10 +40,10 @@ public class Constants {
     
     // Game Mechanics
     public static final int IMPACT_RADIUS = 50;
-    public static final int IMPACT_NOISE_AMOUNT = 2;
+    public static final int IMPACT_NOISE_AMOUNT = 5;
     public static final int IMPACT_FORCE_MULTIPLIER = 10;
     public static final int WIRE_PROXIMITY_THRESHOLD = 10;
-    public static final int PACKET_LOSS_THRESHOLD = 50; // 50% loss threshold
+    public static final int PACKET_LOSS_THRESHOLD = 20; // 20% loss threshold
     
     // Power-up durations (in frames, 60 frames = 1 second at 60fps)
     public static final int O_ATAR_DURATION = 600; // 10 seconds

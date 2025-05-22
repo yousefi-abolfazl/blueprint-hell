@@ -58,13 +58,19 @@ public class StandardSystem extends NetworkSystem {
             // Try to find an empty port first
             List<Port> emptyPorts = new ArrayList<>();
             
-            for (Port port : outputPorts) {
-                // Logic to determine if port is empty would depend on wire connection
-                // This is a simplified check
-                boolean isEmpty = true; // This would need to check the wire connected to this port
+            for (Port outputPort : outputPorts) {
+                // Check if any wire connected to this port has packets on it
+                boolean isEmpty = true;
+                
+                for (Wire wire : Game.getInstance().getWires()) {
+                    if (wire.getSourcePort() == outputPort && !wire.isEmpty()) {
+                        isEmpty = false;
+                        break;
+                    }
+                }
                 
                 if (isEmpty) {
-                    emptyPorts.add(port);
+                    emptyPorts.add(outputPort);
                 }
             }
             
@@ -87,13 +93,21 @@ public class StandardSystem extends NetworkSystem {
                 }
                 
                 if (selectedPort != null) {
-                    // Send packet through the selected port
-                    // This would involve setting the packet's position at the port
-                    // and adding it to the wire connected to this port
-                    storedPackets.remove(packetToSend);
-                    // Logic to send packet would be implemented here
+                    // Find wire connected to the selected port
+                    for (Wire wire : Game.getInstance().getWires()) {
+                        if (wire.getSourcePort() == selectedPort) {
+                            // Remove packet from storage and send it through the wire
+                            storedPackets.remove(packetToSend);
+                            System.out.println("Sending packet from standard system through wire");
+                            wire.addPacket(packetToSend);
+                            break;
+                        }
+                    }
                 }
             }
         }
+        
+        // System remains active as long as it has stored packets
+        setActive(!storedPackets.isEmpty());
     }
 } 

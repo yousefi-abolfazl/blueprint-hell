@@ -12,6 +12,14 @@ public class GameFrame extends JFrame {
         setSize(GAME_FRAME_DIMENSION);
         setLocationRelativeTo(null);
         setLayout(null);
+        
+        // Disable frame resizing and maximizing
+        setResizable(false);
+        setUndecorated(true);
+        
+        // Set fullscreen properties
+        setExtendedState(JFrame.MAXIMIZED_BOTH);
+        
         setVisible(true);
     }
 

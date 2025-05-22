@@ -9,6 +9,7 @@ public class SourceSystem extends NetworkSystem {
     private int packetCounter;
     private boolean isSquarePacketGenerator;
     private Random random;
+    private int localPacketsGenerated = 0; // تعداد پکت‌های تولید شده توسط این سیستم
     
     public SourceSystem(Point position, int width, int height, int packetGenerationFrequency, boolean isSquarePacketGenerator) {
         super(position, width, height, 0); // Source systems don't store packets
@@ -16,6 +17,7 @@ public class SourceSystem extends NetworkSystem {
         this.packetCounter = 0;
         this.isSquarePacketGenerator = isSquarePacketGenerator;
         this.random = new Random();
+        this.localPacketsGenerated = 0;
     }
     
     @Override
@@ -53,32 +55,72 @@ public class SourceSystem extends NetworkSystem {
     
     @Override
     public void update() {
+        System.out.println("SourceSystem.update() called - counter: " + packetCounter + ", frequency: " + packetGenerationFrequency);
+        
+        if (!isActive()) {
+            System.out.println("SourceSystem is not active, skipping update");
+            return;
+        }
+        
         packetCounter++;
         if (packetCounter >= packetGenerationFrequency) {
+            System.out.println("Time to generate packet!");
             generatePacket();
             packetCounter = 0;
         }
     }
     
     private void generatePacket() {
+        // Always ensure we're active when generating packets
+        setActive(true);
+        
         if (outputPorts.isEmpty()) {
+            System.out.println("No output ports available in source system");
             return;
         }
         
         // Choose a random output port
         Port outputPort = outputPorts.get(random.nextInt(outputPorts.size()));
-        Point packetPosition = outputPort.getPosition();
+        Point packetPosition = new Point(outputPort.getPosition());
+        
+        System.out.println("Generating packet at " + packetPosition.x + "," + packetPosition.y);
         
         // Create the appropriate packet type
         Packet newPacket;
         if (isSquarePacketGenerator) {
             newPacket = new SquarePacket(packetPosition);
+            System.out.println("Created a square packet");
         } else {
             newPacket = new TrianglePacket(packetPosition);
+            System.out.println("Created a triangle packet");
         }
         
-        // Logic to send the packet through the wire would be implemented here
-        // For now, we just make sure the packet exists and is positioned correctly
+        // افزایش شمارنده‌های پکت
+        localPacketsGenerated++;
+        Game.getInstance().incrementTotalPacketsGenerated();
+        System.out.println("Packet #" + localPacketsGenerated + " created by this source. Total packets in game: " + 
+                          Game.getInstance().getTotalPacketsGenerated());
+        
+        // Send the packet through any connected wire
+        boolean packetSent = false;
+        for (Wire wire : Game.getInstance().getWires()) {
+            if (wire.getSourcePort() == outputPort) {
+                System.out.println("Sending packet from source system through wire");
+                wire.addPacket(newPacket);
+                packetSent = true;
+                break;
+            }
+        }
+        
+        if (!packetSent) {
+            System.out.println("No wire connected to output port - packet not sent");
+        }
+    }
+    
+    public void forceGeneratePacket() {
+        // فراخوانی مستقیم متد generatePacket بدون در نظر گرفتن packet counter
+        System.out.println("Forcing packet generation from source system");
+        generatePacket();
     }
     
     public void setPacketGenerationFrequency(int frequency) {

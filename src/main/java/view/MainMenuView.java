@@ -106,9 +106,10 @@ public class MainMenuView extends JPanel{
     public void setupButtons() {
         int centerX = (int)(GAME_FRAME_DIMENSION.getWidth() / 2);
         int buttonWidth = 180;
-        int buttonHeight = 80;
-        int startY = 700;
-        int gap = 70;
+        int buttonHeight = 60;
+        int startY = imageY + imageHeight + 100;
+        int gap = 40;
+
         startGameButton = new CustomButton("Start Game");
         exitButton = new CustomButton("Exit");
         settingsButton = new CustomButton("Settings");
@@ -116,10 +117,10 @@ public class MainMenuView extends JPanel{
         helpButton = new CustomButton("How to Play");
 
         startGameButton.setBounds(centerX - buttonWidth/2, startY, buttonWidth, buttonHeight);
-        exitButton.setBounds(2 * centerX - buttonWidth/2 - 3 * gap , imageY + imageHeight / 2 - buttonHeight /2, buttonWidth, buttonHeight);
-        settingsButton.setBounds(buttonWidth/2 + gap, imageY + imageHeight / 2 - buttonHeight / 2, buttonWidth, buttonHeight);
-        gameStagesButton.setBounds(centerX - buttonWidth/2 + gap + 20, startY, buttonWidth, buttonHeight);
-        helpButton.setBounds(centerX - buttonWidth/2, startY + buttonHeight + 20, buttonWidth, buttonHeight);
+        gameStagesButton.setBounds(centerX - buttonWidth/2, startY + buttonHeight + gap, buttonWidth, buttonHeight);
+        helpButton.setBounds(centerX - buttonWidth/2, startY + 2 * (buttonHeight + gap), buttonWidth, buttonHeight);
+        settingsButton.setBounds(centerX - buttonWidth/2, startY + 3 * (buttonHeight + gap), buttonWidth, buttonHeight);
+        exitButton.setBounds(centerX - buttonWidth/2, startY + 4 * (buttonHeight + gap), buttonWidth, buttonHeight);
 
         add(startGameButton);
         add(exitButton);
@@ -158,24 +159,66 @@ public class MainMenuView extends JPanel{
         
         JPanel panel = new JPanel();
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+        panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
         
         // Volume slider
         JLabel volumeLabel = new JLabel("Volume");
-        JSlider volumeSlider = new JSlider(0, 100, 50);
+        int currentVolume = (int)(controller.SoundManager.getInstance().getVolume() * 100);
+        JSlider volumeSlider = new JSlider(0, 100, currentVolume);
         volumeSlider.setMajorTickSpacing(25);
         volumeSlider.setPaintTicks(true);
         volumeSlider.setPaintLabels(true);
         
+        // Mute checkbox
+        JCheckBox muteCheckbox = new JCheckBox("Mute Sound");
+        muteCheckbox.setSelected(controller.SoundManager.getInstance().isMuted());
+        
+        // Update sound manager when slider changes
+        volumeSlider.addChangeListener(e -> {
+            float volume = volumeSlider.getValue() / 100.0f;
+            controller.SoundManager.getInstance().setVolume(volume);
+        });
+        
+        // Update sound manager when checkbox changes
+        muteCheckbox.addActionListener(e -> {
+            controller.SoundManager.getInstance().setMuted(muteCheckbox.isSelected());
+        });
+        
         // Add components to panel
         panel.add(Box.createVerticalGlue());
-        panel.add(volumeLabel);
-        panel.add(volumeSlider);
+        
+        JPanel volumePanel = new JPanel();
+        volumePanel.setLayout(new BoxLayout(volumePanel, BoxLayout.Y_AXIS));
+        volumePanel.add(volumeLabel);
+        volumePanel.add(volumeSlider);
+        volumePanel.add(Box.createVerticalStrut(10));
+        volumePanel.add(muteCheckbox);
+        
+        panel.add(volumePanel);
+        panel.add(Box.createVerticalGlue());
+        
+        // Key bindings panel (placeholder for extra functionality)
+        JPanel keyBindingsPanel = new JPanel();
+        keyBindingsPanel.setLayout(new BoxLayout(keyBindingsPanel, BoxLayout.Y_AXIS));
+        JButton keyBindingsButton = new JButton("Configure Key Bindings");
+        keyBindingsButton.addActionListener(e -> {
+            // Will be implemented in the bonus section
+            JOptionPane.showMessageDialog(settingsDialog, 
+                "Key binding configuration will be available in a future update.", 
+                "Coming Soon", JOptionPane.INFORMATION_MESSAGE);
+        });
+        keyBindingsPanel.add(keyBindingsButton);
+        
+        panel.add(keyBindingsPanel);
         panel.add(Box.createVerticalGlue());
         
         // Close button
         JButton closeButton = new JButton("Close");
         closeButton.addActionListener(e -> settingsDialog.dispose());
-        panel.add(closeButton);
+        
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        buttonPanel.add(closeButton);
+        panel.add(buttonPanel);
         
         settingsDialog.add(panel);
         settingsDialog.setVisible(true);

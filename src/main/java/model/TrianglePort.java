@@ -13,10 +13,14 @@ public class TrianglePort extends Port {
     public void render(Graphics2D g) {
         int portSize = size * 10;
         
+        // ذخیره‌سازی وضعیت فعلی گرافیک
+        Stroke originalStroke = g.getStroke();
+        
+        // تنظیم رنگ پورت بر اساس نوع (ورودی/خروجی)
         if (isInput) {
-            g.setColor(Color.GREEN);
+            g.setColor(Constants.PORT_INPUT_COLOR);
         } else {
-            g.setColor(Color.RED);
+            g.setColor(Constants.PORT_OUTPUT_COLOR);
         }
         
         int[] xPoints = {
@@ -31,9 +35,17 @@ public class TrianglePort extends Port {
             position.y + portSize / 2
         };
         
+        // پر کردن مثلث
         g.fillPolygon(xPoints, yPoints, 3);
         
+        // تنظیم ضخامت خط برای حاشیه
+        g.setStroke(new BasicStroke(1.0f));
+        
+        // رسم حاشیه با رنگ تیره‌تر
         g.setColor(Color.BLACK);
         g.drawPolygon(xPoints, yPoints, 3);
+        
+        // بازگرداندن وضعیت اصلی گرافیک
+        g.setStroke(originalStroke);
     }
 } 

@@ -22,6 +22,8 @@ public class Game {
     private int currentLevel;
     private boolean impactEffectActive;
     private boolean collisionDisabled;
+    private int totalPacketsGenerated;
+    private int totalPacketsLost;
     
     private Game() {
         systems = new ArrayList<>();
@@ -35,6 +37,8 @@ public class Game {
         currentLevel = 1;
         impactEffectActive = true;
         collisionDisabled = false;
+        totalPacketsGenerated = 0;
+        totalPacketsLost = 0;
     }
     
     public static Game getInstance() {
@@ -72,17 +76,34 @@ public class Game {
             system.update();
         }
         
+        // Update all wires
+        for (Wire wire : wires) {
+            wire.update();
+        }
+        
         // Handle packet interactions and check for collisions
         checkPacketCollisions();
+        
+        // نمایش اطلاعات جاری packet loss هر 30 فریم (حدود 0.5 ثانیه)
+        if (temporalProgress % 30 == 0) {
+            System.out.println("Current stats - Total packets: " + totalPacketsGenerated + 
+                             ", Lost packets: " + totalPacketsLost + 
+                             ", Loss percentage: " + packetLoss + "%");
+        }
         
         // Check game over condition
         if (packetLoss > Constants.PACKET_LOSS_THRESHOLD) {
             isGameOver = true;
             SoundManager.getInstance().playSound("game_over");
+            System.out.println("GAME OVER! Packet loss threshold exceeded: " + packetLoss + "% > " + 
+                             Constants.PACKET_LOSS_THRESHOLD + "%");
         }
         
         // Check level completion
         checkLevelCompletion();
+        
+        // افزایش شمارنده زمان
+        temporalProgress++;
     }
     
     private void checkLevelCompletion() {
@@ -176,7 +197,14 @@ public class Game {
             for (Wire wire : wires) {
                 if (wire.getPacketsOnWire().contains(packet)) {
                     wire.removePacket(packet);
-                    packetLoss++;
+                    totalPacketsLost++;
+                    updatePacketLossPercentage();
+                    
+                    // چاپ وضعیت فعلی packet loss
+                    System.out.println("Packet Lost! Total packets: " + totalPacketsGenerated + 
+                                     ", Lost packets: " + totalPacketsLost + 
+                                     ", Loss percentage: " + packetLoss + "%");
+                    
                     break;
                 }
             }
@@ -224,7 +252,11 @@ public class Game {
                     // Check if packet was pushed off the wire
                     if (!wire.isPointNearWire(packet.getPosition(), Constants.WIRE_PROXIMITY_THRESHOLD)) {
                         wire.removePacket(packet);
-                        packetLoss++;
+                        totalPacketsLost++;
+                        updatePacketLossPercentage();
+                        System.out.println("Packet knocked off wire! Total packets: " + totalPacketsGenerated + 
+                                           ", Lost packets: " + totalPacketsLost + 
+                                           ", Loss percentage: " + packetLoss + "%");
                         SoundManager.getInstance().playSound("packet_lost");
                     }
                 }
@@ -234,11 +266,35 @@ public class Game {
     
     public void advanceTime() {
         temporalProgress++;
+        System.out.println("Time advanced to: " + temporalProgress);
+        
+        // اجرای یک سیکل به‌روزرسانی برای همه سیستم‌ها
+        for (NetworkSystem system : systems) {
+            if (system instanceof SourceSystem) {
+                // دستور به سیستم منبع برای تولید یک پکت
+                SourceSystem sourceSystem = (SourceSystem) system;
+                sourceSystem.setActive(true);
+                sourceSystem.forceGeneratePacket();
+            }
+        }
     }
     
     public void rewindTime() {
         if (temporalProgress > 0) {
             temporalProgress--;
+            System.out.println("Time rewinded to: " + temporalProgress);
+            
+            // کاهش اثرات noise در همه پکت‌ها
+            for (Wire wire : wires) {
+                for (Packet packet : wire.getPacketsOnWire()) {
+                    // کاهش noise به میزان 1 واحد
+                    int currentNoise = packet.getNoise();
+                    if (currentNoise > 0) {
+                        packet.resetNoise();
+                        packet.addNoise(currentNoise - 1);
+                    }
+                }
+            }
         }
     }
     
@@ -345,5 +401,28 @@ public class Game {
         isGameOver = false;
         impactEffectActive = true;
         collisionDisabled = false;
+        totalPacketsGenerated = 0;
+        totalPacketsLost = 0;
+    }
+    
+    public void incrementTotalPacketsGenerated() {
+        totalPacketsGenerated++;
+        updatePacketLossPercentage();
+    }
+    
+    public int getTotalPacketsGenerated() {
+        return totalPacketsGenerated;
+    }
+    
+    public int getTotalPacketsLost() {
+        return totalPacketsLost;
+    }
+    
+    private void updatePacketLossPercentage() {
+        if (totalPacketsGenerated > 0) {
+            packetLoss = (totalPacketsLost * 100) / totalPacketsGenerated;
+        } else {
+            packetLoss = 0;
+        }
     }
 } 

@@ -79,6 +79,7 @@ public class GamePanel extends JPanel {
         actionMap.put("advanceTime", new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
+                System.out.println("Right arrow pressed via key binding");
                 if (!isGameRunning) {
                     game.advanceTime();
                     updateHUD();
@@ -92,6 +93,7 @@ public class GamePanel extends JPanel {
         actionMap.put("rewindTime", new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
+                System.out.println("Left arrow pressed via key binding");
                 if (!isGameRunning) {
                     game.rewindTime();
                     updateHUD();
@@ -99,6 +101,83 @@ public class GamePanel extends JPanel {
                 }
             }
         });
+        
+        // Add S key binding for shop
+        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_S, 0), "showShop");
+        actionMap.put("showShop", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                System.out.println("S key pressed via key binding");
+                showShop();
+            }
+        });
+        
+        // Add H key binding for HUD toggle
+        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_H, 0), "toggleHUD");
+        actionMap.put("toggleHUD", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                System.out.println("H key pressed via key binding");
+                toggleHUD();
+                repaint();
+            }
+        });
+        
+        // Create a timer for regular updates
+        Timer gameUpdateTimer = new Timer(16, e -> {
+            if (isGameRunning && !game.isPaused()) {
+                System.out.println("Game update timer tick at " + System.currentTimeMillis());
+                update();
+            }
+        });
+        gameUpdateTimer.start();
+        
+        // Force focus request on this panel
+        SwingUtilities.invokeLater(this::forceFocus);
+    }
+    
+    // Method to aggressively request focus
+    public void forceFocus() {
+        System.out.println("Forcing focus on GamePanel");
+        requestFocusInWindow();
+        requestFocus();
+        
+        // More aggressive focus request
+        SwingUtilities.invokeLater(() -> {
+            System.out.println("Requesting focus in invoke later");
+            requestFocusInWindow();
+            requestFocus();
+            
+            // Try to make the panel the focus owner
+            KeyboardFocusManager.getCurrentKeyboardFocusManager()
+                .clearGlobalFocusOwner();
+            requestFocusInWindow();
+            
+            // Try to make window active
+            Window window = SwingUtilities.getWindowAncestor(this);
+            if (window != null) {
+                window.toFront();
+            }
+        });
+        
+        // Create a recurring timer that checks for focus
+        Timer focusTimer = new Timer(500, e -> {
+            if (!hasFocus()) {
+                System.out.println("GamePanel doesn't have focus - requesting again");
+                requestFocusInWindow();
+                requestFocus();
+                
+                // Try to make the panel the focus owner
+                KeyboardFocusManager.getCurrentKeyboardFocusManager()
+                    .clearGlobalFocusOwner();
+                requestFocusInWindow();
+            } else {
+                System.out.println("GamePanel has focus!");
+                ((Timer)e.getSource()).stop();
+            }
+        });
+        focusTimer.setRepeats(true);
+        focusTimer.start();
     }
     
     private void initializeHUD() {
@@ -151,6 +230,7 @@ public class GamePanel extends JPanel {
                     selectedPort = clickedPort;
                     isWiring = true;
                     wireEndPoint = e.getPoint();
+                    System.out.println("Started wiring from output port at " + clickedPort.getPosition().x + "," + clickedPort.getPosition().y);
                 }
             }
             
@@ -163,6 +243,7 @@ public class GamePanel extends JPanel {
                 if (targetPort != null && targetPort.isInput() && 
                     selectedPort.getParentSystem() != targetPort.getParentSystem()) {
                     
+                    System.out.println("Connecting to input port at " + targetPort.getPosition().x + "," + targetPort.getPosition().y);
                     Wire newWire = new Wire(selectedPort, targetPort);
                     int wireLength = newWire.getLength();
                     
@@ -171,7 +252,12 @@ public class GamePanel extends JPanel {
                         wires.add(newWire);
                         updateHUD();
                         SoundManager.getInstance().playSound("connection");
+                        System.out.println("Wire connected successfully! Length: " + wireLength);
+                    } else {
+                        System.out.println("Not enough wire remaining. Need: " + wireLength + ", Have: " + game.getRemainingWireLength());
                     }
+                } else {
+                    System.out.println("Invalid connection or no target port found");
                 }
                 
                 selectedPort = null;
@@ -183,8 +269,13 @@ public class GamePanel extends JPanel {
             @Override
             public void mouseDragged(MouseEvent e) {
                 if (isWiring) {
-                    wireEndPoint = e.getPoint();
-                    repaint();
+                    // بهبود پاسخگویی در زمان درگ کردن
+                    SwingUtilities.invokeLater(() -> {
+                        wireEndPoint = e.getPoint();
+                        repaint(selectedPort.getPosition().x - 100, selectedPort.getPosition().y - 100, 
+                                Math.abs(wireEndPoint.x - selectedPort.getPosition().x) + 200, 
+                                Math.abs(wireEndPoint.y - selectedPort.getPosition().y) + 200);
+                    });
                 }
             }
         });
@@ -193,25 +284,32 @@ public class GamePanel extends JPanel {
         addKeyListener(new KeyAdapter() {
             @Override
             public void keyPressed(KeyEvent e) {
+                System.out.println("Key pressed: " + KeyEvent.getKeyText(e.getKeyCode()) + " (code: " + e.getKeyCode() + ")");
                 switch (e.getKeyCode()) {
                     case KeyEvent.VK_RIGHT:
+                        System.out.println("Right arrow pressed - attempting to advance time");
                         if (!isGameRunning) game.advanceTime();
                         break;
                     case KeyEvent.VK_LEFT:
+                        System.out.println("Left arrow pressed - attempting to rewind time");
                         if (!isGameRunning) game.rewindTime();
                         break;
                     case KeyEvent.VK_SPACE:
+                        System.out.println("Space pressed - attempting to toggle game running");
                         toggleGameRunning();
                         break;
                     case KeyEvent.VK_H:
+                        System.out.println("H pressed - attempting to toggle HUD");
                         toggleHUD();
                         break;
                     case KeyEvent.VK_ESCAPE:
+                        System.out.println("Escape pressed - checking game running status");
                         if (isGameRunning) {
                             isGameRunning = false;
                         }
                         break;
                     case KeyEvent.VK_S:
+                        System.out.println("S pressed - attempting to show shop");
                         showShop();
                         break;
                 }
@@ -222,12 +320,22 @@ public class GamePanel extends JPanel {
     }
     
     private void showShop() {
-        if (!isGameRunning) return; // Shop only available during gameplay
-        
+        System.out.println("Opening shop..."); // اضافه کردن لاگ برای بررسی
+        // اجازه می‌دهیم فروشگاه همیشه نمایش داده شود
         game.setPaused(true);
         ShopView shopView = new ShopView(GameFrame.getINSTANCE());
+        
+        // افزودن window listener برای بازگشت focus به GamePanel بعد از بسته شدن فروشگاه
+        shopView.addWindowListener(new java.awt.event.WindowAdapter() {
+            @Override
+            public void windowClosed(java.awt.event.WindowEvent e) {
+                System.out.println("Shop closed, returning focus to GamePanel");
+                requestFocusInWindow();
+                game.setPaused(false);
+            }
+        });
+        
         shopView.setVisible(true);
-        game.setPaused(false);
     }
     
     private Port findPortAt(Point point) {
@@ -288,7 +396,7 @@ public class GamePanel extends JPanel {
             new Point(100, 200), 
             systemWidth, 
             systemHeight, 
-            60, // Generate a packet every 60 frames
+            20, // Generate a packet every 20 frames (reduced from 60)
             true // Generate square packets
         );
         
@@ -360,7 +468,7 @@ public class GamePanel extends JPanel {
             new Point(100, 150), 
             systemWidth, 
             systemHeight, 
-            60, 
+            20, // Generate a packet every 20 frames (reduced from 60)
             true // square packets
         );
         
@@ -377,7 +485,7 @@ public class GamePanel extends JPanel {
             new Point(100, 300), 
             systemWidth, 
             systemHeight, 
-            80, 
+            30, // Generate a packet every 30 frames (reduced from 80)
             false // triangle packets
         );
         
@@ -497,7 +605,20 @@ public class GamePanel extends JPanel {
         
         if (isGameRunning) {
             System.out.println("Game started running");
+            
+            // Make sure source systems are active
+            for (NetworkSystem system : systems) {
+                if (system instanceof SourceSystem) {
+                    System.out.println("Activating source system");
+                    system.setActive(true);
+                }
+            }
+            
             SoundManager.getInstance().playSound("game_start");
+            
+            // Directly trigger an update
+            System.out.println("Triggering immediate update");
+            update();
         } else {
             System.out.println("Game paused");
             SoundManager.getInstance().playSound("game_pause");
@@ -530,15 +651,58 @@ public class GamePanel extends JPanel {
     
     public void update() {
         if (isGameRunning && !game.isPaused()) {
+            System.out.println("Updating game state...");
+            
+            // Display system status
+            displayStatus();
+            
+            // Update all systems directly in addition to calling game.update()
+            for (NetworkSystem system : systems) {
+                System.out.println("Updating system: " + system.getClass().getSimpleName());
+                system.update();
+            }
+            
+            // Update all wires directly
+            for (Wire wire : wires) {
+                System.out.println("Updating wire...");
+                wire.update();
+            }
+            
+            // Also call the game's update method which handles collisions etc.
             game.update();
             
             if (game.isGameOver()) {
                 isGameRunning = false;
+                System.out.println("GAME OVER DETECTED! Packet Loss: " + game.getPacketLoss() + "%");
                 showGameOverDialog();
             }
             
             updateHUD();
+            repaint();
         }
+    }
+    
+    private void displayStatus() {
+        System.out.println("--- GAME STATUS ---");
+        
+        // Check systems
+        System.out.println("Systems: " + systems.size());
+        for (NetworkSystem system : systems) {
+            System.out.println("  System: " + system.getClass().getSimpleName() + 
+                              ", Active: " + system.isActive() +
+                              ", InputPorts: " + system.getInputPorts().size() +
+                              ", OutputPorts: " + system.getOutputPorts().size());
+        }
+        
+        // Check wires
+        System.out.println("Wires: " + wires.size());
+        for (Wire wire : wires) {
+            System.out.println("  Wire: Source=" + wire.getSourcePort().getClass().getSimpleName() + 
+                              ", Destination=" + wire.getDestinationPort().getClass().getSimpleName() +
+                              ", Packets=" + wire.getPacketsOnWire().size());
+        }
+        
+        System.out.println("------------------");
     }
     
     private void showGameOverDialog() {
@@ -589,7 +753,24 @@ public class GamePanel extends JPanel {
         
         // Draw wire in progress
         if (isWiring && selectedPort != null) {
-            g2d.setColor(game.getRemainingWireLength() > 0 ? 
+            Port hoverPort = findPortAt(wireEndPoint);
+            boolean isValidConnection = false;
+            
+            // Check if we're hovering over a valid port for connection
+            if (hoverPort != null && hoverPort.isInput() && 
+                hoverPort.getParentSystem() != selectedPort.getParentSystem()) {
+                
+                // Calculate potential wire length
+                int wireLength = (int) Math.sqrt(
+                    Math.pow(hoverPort.getPosition().x - selectedPort.getPosition().x, 2) +
+                    Math.pow(hoverPort.getPosition().y - selectedPort.getPosition().y, 2)
+                );
+                
+                isValidConnection = wireLength <= game.getRemainingWireLength();
+            }
+            
+            // Choose color based on connection validity
+            g2d.setColor(isValidConnection ? 
                          Constants.WIRE_ALLOWABLE_COLOR : 
                          Constants.WIRE_UNALLOWABLE_COLOR);
             
