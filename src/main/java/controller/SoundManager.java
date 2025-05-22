@@ -169,26 +169,28 @@ public class SoundManager {
     
     // Power-up timer methods
     public void scheduleOAtarDeactivation(Runnable onComplete) {
-        System.out.println("Scheduling O'Atar deactivation");
+        System.out.println("Scheduling O'Atar deactivation for " + Constants.O_ATAR_DURATION + " frames (10 seconds)");
         Timer timer = new Timer();
         timer.schedule(new TimerTask() {
             @Override
             public void run() {
+                System.out.println("O'Atar power-up expired");
                 onComplete.run();
                 timer.cancel();
             }
-        }, Constants.O_ATAR_DURATION * 16); // Convert frames to milliseconds (assuming 60 FPS)
+        }, Constants.O_ATAR_DURATION * 1000 / 60); // Convert frames to milliseconds (assuming 60 FPS)
     }
     
     public void scheduleOAiryamanDeactivation(Runnable onComplete) {
-        System.out.println("Scheduling O'Airyaman deactivation");
+        System.out.println("Scheduling O'Airyaman deactivation for " + Constants.O_AIRYAMAN_DURATION + " frames (5 seconds)");
         Timer timer = new Timer();
         timer.schedule(new TimerTask() {
             @Override
             public void run() {
+                System.out.println("O'Airyaman power-up expired");
                 onComplete.run();
                 timer.cancel();
             }
-        }, Constants.O_AIRYAMAN_DURATION * 16); // Convert frames to milliseconds
+        }, Constants.O_AIRYAMAN_DURATION * 1000 / 60); // Convert frames to milliseconds
     }
 } 

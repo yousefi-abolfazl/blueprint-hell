@@ -153,6 +153,50 @@ public class Game {
         Point pos1 = packet1.getPosition();
         Point pos2 = packet2.getPosition();
         
+        // Check if both packets are on the same wire and moving in the same direction
+        if (arePacketsOnSameWire(packet1, packet2)) {
+            // For packets on the same wire moving in the same direction, use a reduced collision threshold
+            // to make it less likely that they collide
+            Port source1 = packet1.getSourcePort();
+            Port source2 = packet2.getSourcePort();
+            
+            // If they're from the same source port (same wire), be more forgiving
+            if (source1 == source2) {
+                // Calculate direction vectors to see if they're moving in the same direction
+                Wire wire = findWireContainingPacket(packet1);
+                if (wire != null) {
+                    Point wireEnd = wire.getDestinationPort().getPosition();
+                    
+                    // Calculate direction from packet1 to wire end
+                    double dx1 = wireEnd.x - pos1.x;
+                    double dy1 = wireEnd.y - pos1.y;
+                    
+                    // Calculate direction from packet2 to wire end
+                    double dx2 = wireEnd.x - pos2.x;
+                    double dy2 = wireEnd.y - pos2.y;
+                    
+                    // Calculate dot product to check if moving in same direction (positive dot product)
+                    double dotProduct = dx1 * dx2 + dy1 * dy2;
+                    
+                    if (dotProduct > 0) {
+                        // They're moving in roughly the same direction, so be more forgiving
+                        // Calculate distance between them
+                        double distance = Math.sqrt(
+                            Math.pow(pos2.x - pos1.x, 2) + 
+                            Math.pow(pos2.y - pos1.y, 2)
+                        );
+                        
+                        // Use a much smaller collision threshold for packets moving the same direction
+                        int reducedCollisionThreshold = (packet1.getSize() + packet2.getSize()) / 2;
+                        System.out.println("Same direction packets: Distance=" + distance + 
+                                          ", Threshold=" + reducedCollisionThreshold);
+                        return distance < reducedCollisionThreshold;
+                    }
+                }
+            }
+        }
+        
+        // Standard collision detection for packets not on same wire or moving in different directions
         int collisionThreshold = packet1.getSize() + packet2.getSize();
         double distance = Math.sqrt(
             Math.pow(pos2.x - pos1.x, 2) + 
@@ -160,6 +204,25 @@ public class Game {
         );
         
         return distance < collisionThreshold;
+    }
+    
+    private boolean arePacketsOnSameWire(Packet packet1, Packet packet2) {
+        for (Wire wire : wires) {
+            List<Packet> packets = wire.getPacketsOnWire();
+            if (packets.contains(packet1) && packets.contains(packet2)) {
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    private Wire findWireContainingPacket(Packet packet) {
+        for (Wire wire : wires) {
+            if (wire.getPacketsOnWire().contains(packet)) {
+                return wire;
+            }
+        }
+        return null;
     }
     
     private void handleCollision(Packet packet1, Packet packet2) {

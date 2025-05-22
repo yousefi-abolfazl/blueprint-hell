@@ -124,6 +124,12 @@ public class SourceSystem extends NetworkSystem {
         }
     }
     
+    public void randomizePacketCounter() {
+        // Set counter to a random value between 0 and frequency to stagger packet generation
+        this.packetCounter = random.nextInt(packetGenerationFrequency);
+        System.out.println("Randomized packet counter to " + packetCounter + " (frequency: " + packetGenerationFrequency + ")");
+    }
+    
     public void forceGeneratePacket() {
         // فراخوانی مستقیم متد generatePacket بدون در نظر گرفتن packet counter
         System.out.println("Forcing packet generation from source system");

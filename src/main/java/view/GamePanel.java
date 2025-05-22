@@ -127,7 +127,38 @@ public class GamePanel extends JPanel {
         Timer gameUpdateTimer = new Timer(16, e -> {
             if (isGameRunning && !game.isPaused()) {
                 System.out.println("Game update timer tick at " + System.currentTimeMillis());
-                update();
+                
+                // First update all systems for packet generation
+                for (NetworkSystem system : systems) {
+                    if (system instanceof SourceSystem) {
+                        system.update();
+                    }
+                }
+                
+                // Then update all non-source systems
+                for (NetworkSystem system : systems) {
+                    if (!(system instanceof SourceSystem)) {
+                        system.update();
+                    }
+                }
+                
+                // Then update all wires one by one to avoid simultaneous collisions
+                for (Wire wire : wires) {
+                    wire.update();
+                    // Small yield to avoid wire updates happening in the same "moment"
+                    try {
+                        Thread.sleep(1); 
+                    } catch(InterruptedException ex) {
+                        Thread.currentThread().interrupt();
+                    }
+                }
+                
+                // Finally update game state for collisions
+                game.update();
+                
+                // Update UI
+                updateHUD();
+                repaint();
             }
         });
         gameUpdateTimer.start();
@@ -195,17 +226,29 @@ public class GamePanel extends JPanel {
         // Position instruction label at the bottom of the screen
         instructionLabel.setBounds(20, getHeight() - 50, 600, 30);
         
+        // Add shop button to the top right
+        JButton shopButton = new JButton("Shop");
+        shopButton.setBounds(getWidth() - 100, 20, 80, 30);
+        shopButton.setBackground(new Color(255, 193, 7)); // Amber color
+        shopButton.setForeground(Color.BLACK);
+        shopButton.setFocusPainted(false);
+        shopButton.setBorder(BorderFactory.createRaisedBevelBorder());
+        shopButton.addActionListener(e -> showShop());
+        shopButton.setFont(new Font("Arial", Font.BOLD, 14));
+        
         add(wireLabel);
         add(temporalLabel);
         add(packetLossLabel);
         add(coinsLabel);
         add(instructionLabel);
+        add(shopButton);
         
-        // Add component listener to reposition instruction label when panel resizes
+        // Add component listener to reposition elements when panel resizes
         addComponentListener(new ComponentAdapter() {
             @Override
             public void componentResized(ComponentEvent e) {
                 instructionLabel.setBounds(20, getHeight() - 50, 600, 30);
+                shopButton.setBounds(getWidth() - 100, 20, 80, 30);
             }
         });
     }
@@ -320,21 +363,47 @@ public class GamePanel extends JPanel {
     }
     
     private void showShop() {
-        System.out.println("Opening shop..."); // اضافه کردن لاگ برای بررسی
-        // اجازه می‌دهیم فروشگاه همیشه نمایش داده شود
+        System.out.println("Opening shop...");
+        
+        // Store the current game running state before pausing
+        boolean wasRunning = isGameRunning;
+        if (isGameRunning) {
+            // Temporarily pause the game while shop is open
+            isGameRunning = false;
+        }
+        
+        // Ensure the game is paused
         game.setPaused(true);
+        
+        // Create and configure the shop dialog
         ShopView shopView = new ShopView(GameFrame.getINSTANCE());
         
-        // افزودن window listener برای بازگشت focus به GamePanel بعد از بسته شدن فروشگاه
+        // Add window listener to handle shop closing
         shopView.addWindowListener(new java.awt.event.WindowAdapter() {
             @Override
             public void windowClosed(java.awt.event.WindowEvent e) {
                 System.out.println("Shop closed, returning focus to GamePanel");
+                
+                // Request focus back
                 requestFocusInWindow();
-                game.setPaused(false);
+                forceFocus();
+                
+                // Restore previous game state
+                if (wasRunning) {
+                    isGameRunning = true;
+                }
+                
+                // Unpause the game if it was running before
+                game.setPaused(!wasRunning);
+                
+                // Update UI
+                updateHUD();
+                repaint();
             }
         });
         
+        // Show the shop dialog
+        shopView.setLocationRelativeTo(GameFrame.getINSTANCE());
         shopView.setVisible(true);
     }
     
@@ -396,7 +465,7 @@ public class GamePanel extends JPanel {
             new Point(100, 200), 
             systemWidth, 
             systemHeight, 
-            20, // Generate a packet every 20 frames (reduced from 60)
+            60, // Generate a packet every 60 frames (increased from 20)
             true // Generate square packets
         );
         
@@ -468,7 +537,7 @@ public class GamePanel extends JPanel {
             new Point(100, 150), 
             systemWidth, 
             systemHeight, 
-            20, // Generate a packet every 20 frames (reduced from 60)
+            60, // Generate a packet every 60 frames (increased from 20)
             true // square packets
         );
         
@@ -485,7 +554,7 @@ public class GamePanel extends JPanel {
             new Point(100, 300), 
             systemWidth, 
             systemHeight, 
-            30, // Generate a packet every 30 frames (reduced from 80)
+            80, // Generate a packet every 80 frames (increased from 30)
             false // triangle packets
         );
         
@@ -606,15 +675,16 @@ public class GamePanel extends JPanel {
         if (isGameRunning) {
             System.out.println("Game started running");
             
-            // Make sure all source systems are active
+            // Make sure all source systems are active, but don't force generate packets immediately
             for (NetworkSystem system : systems) {
                 if (system instanceof SourceSystem) {
                     System.out.println("Activating source system");
                     system.setActive(true);
                     
-                    // Force an initial packet generation to kickstart the process
+                    // Instead of forcing packet generation immediately, stagger them
                     SourceSystem sourceSystem = (SourceSystem) system;
-                    sourceSystem.forceGeneratePacket();
+                    // Reset counter to a random value to stagger packet generation
+                    sourceSystem.randomizePacketCounter();
                 }
             }
             

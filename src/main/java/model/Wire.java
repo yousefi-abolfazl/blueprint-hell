@@ -143,6 +143,44 @@ public class Wire {
     
     public void addPacket(Packet packet) {
         packet.setSourcePort(sourcePort);
+        
+        // Check if there are already packets on this wire
+        if (!packetsOnWire.isEmpty()) {
+            // Create a small offset to avoid immediate collisions
+            // Get the last packet's position
+            Packet lastPacket = packetsOnWire.get(packetsOnWire.size() - 1);
+            Point lastPosition = lastPacket.getPosition();
+            
+            // Calculate distance between source and destination
+            Point source = sourcePort.getPosition();
+            Point destination = destinationPort.getPosition();
+            
+            // Calculate direction vector
+            double totalDistance = Math.sqrt(
+                Math.pow(destination.x - source.x, 2) + 
+                Math.pow(destination.y - source.y, 2)
+            );
+            
+            double dx = (destination.x - source.x) / totalDistance;
+            double dy = (destination.y - source.y) / totalDistance;
+            
+            // Only offset the new packet if the last one is still near the start
+            double distanceMoved = Math.sqrt(
+                Math.pow(lastPosition.x - source.x, 2) + 
+                Math.pow(lastPosition.y - source.y, 2)
+            );
+            
+            // If the last packet is still close to the source (less than 25% down the wire)
+            if (distanceMoved < totalDistance * 0.25) {
+                // Offset this new packet slightly to avoid collision
+                int offset = 20; // Pixels to offset
+                int newX = source.x + (int)(dx * offset);
+                int newY = source.y + (int)(dy * offset);
+                packet.setPosition(new Point(newX, newY));
+                System.out.println("Offsetting new packet to avoid collision: " + newX + "," + newY);
+            }
+        }
+        
         packetsOnWire.add(packet);
         packet.startMoving(destinationPort.getPosition(), sourcePort);
     }
