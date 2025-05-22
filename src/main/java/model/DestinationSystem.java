@@ -49,6 +49,9 @@ public class DestinationSystem extends NetworkSystem {
         packetsReceived++;
         System.out.println("Destination system received packet #" + packetsReceived);
         
+        // Record successful packet delivery in the Game
+        Game.getInstance().incrementPacketsDelivered();
+        
         // Add coins for the received packet
         Game.getInstance().addCoins(packet.getCoinValue());
         

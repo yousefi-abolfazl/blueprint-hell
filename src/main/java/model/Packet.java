@@ -70,7 +70,15 @@ public abstract class Packet {
         // یک پکت زمانی از دست رفته محسوب می‌شود که noise آن برابر یا بیشتر از size باشد
         boolean lost = noise >= size;
         if (lost) {
-            System.out.println("Packet LOST! Noise (" + noise + ") >= Size (" + size + ")");
+            System.out.println("******************************************");
+            System.out.println("PACKET LOSS CHECK: Noise(" + noise + ") >= Size(" + size + ")");
+            System.out.println("Packet lost at position: " + position.x + "," + position.y);
+            System.out.println("Packet was moving: " + isMoving);
+            if (isMoving && targetPosition != null) {
+                System.out.println("Moving toward: " + targetPosition.x + "," + targetPosition.y);
+                System.out.println("Current speed: " + currentSpeed);
+            }
+            System.out.println("******************************************");
         }
         return lost;
     }
@@ -101,11 +109,24 @@ public abstract class Packet {
     public void update() {
         if (!isMoving) return;
         
+        // اطمینان از اینکه targetPosition تنظیم شده است
+        if (targetPosition == null) {
+            System.out.println("ERROR: Packet is moving but target position is null!");
+            stopMoving();
+            return;
+        }
+        
         // Update speed based on acceleration/deceleration
         if (isAccelerating) {
             currentSpeed = Math.min(maxSpeed, currentSpeed + acceleration);
         } else {
             currentSpeed = Math.max(0, currentSpeed - deceleration);
+        }
+        
+        // اگر سرعت بسیار کم است، یک حداقل سرعت اعمال کنیم تا پکت گیر نکند
+        if (currentSpeed < 0.5) {
+            currentSpeed = 0.5;
+            System.out.println("Increasing packet speed to minimum threshold");
         }
         
         // Calculate actual distance to move this frame
@@ -132,6 +153,16 @@ public abstract class Packet {
         // Calculate new position
         int newX = position.x + (int)(dx * moveDistance);
         int newY = position.y + (int)(dy * moveDistance);
+        
+        // بررسی آیا پکت واقعاً حرکت کرد
+        if (newX == position.x && newY == position.y) {
+            // اگر پکت حرکت نکرد (به خاطر تبدیل به عدد صحیح)، اندکی سرعت را افزایش دهیم
+            currentSpeed += 0.5;
+            moveDistance = currentSpeed;
+            newX = position.x + (int)(dx * moveDistance);
+            newY = position.y + (int)(dy * moveDistance);
+            System.out.println("Packet was stuck, increasing speed to: " + currentSpeed);
+        }
         
         // Set new position
         position = new Point(newX, newY);

@@ -68,6 +68,11 @@ public class Constants {
     public static final String SOUND_GAME_PAUSE = "src/main/resources/sounds/game_pause.wav";
     public static final String SOUND_POWERUP = "src/main/resources/sounds/powerup.wav";
 
+    // Debug settings
+    public static final boolean DEBUG_PACKET_MOVEMENT = true;
+    public static final boolean DEBUG_PACKET_LOSS = true;
+    public static final boolean DEBUG_COLLISIONS = true;
+
     // Add other constants here as needed
 
 }

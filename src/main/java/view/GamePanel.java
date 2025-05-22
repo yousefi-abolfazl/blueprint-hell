@@ -25,6 +25,7 @@ public class GamePanel extends JPanel {
     private JLabel wireLabel;
     private JLabel temporalLabel;
     private JLabel packetLossLabel;
+    private JLabel deliveredLabel;
     private JLabel coinsLabel;
     private JLabel instructionLabel;
     
@@ -215,13 +216,15 @@ public class GamePanel extends JPanel {
         wireLabel = createHUDLabel("Wire: " + game.getRemainingWireLength());
         temporalLabel = createHUDLabel("Time: " + game.getTemporalProgress());
         packetLossLabel = createHUDLabel("Packet Loss: " + game.getPacketLoss() + "%");
+        deliveredLabel = createHUDLabel("Delivered: " + game.getTotalPacketsDelivered());
         coinsLabel = createHUDLabel("Coins: " + game.getCoins());
         instructionLabel = createHUDLabel("[Space] Start/Pause  [→/←] Time  [H] Hide HUD  [S] Shop");
         
         wireLabel.setBounds(20, 20, 150, 30);
         temporalLabel.setBounds(20, 50, 150, 30);
-        packetLossLabel.setBounds(20, 80, 150, 30);
-        coinsLabel.setBounds(20, 110, 150, 30);
+        packetLossLabel.setBounds(20, 80, 200, 30);
+        deliveredLabel.setBounds(20, 110, 150, 30);
+        coinsLabel.setBounds(20, 140, 150, 30);
         
         // Position instruction label at the bottom of the screen
         instructionLabel.setBounds(20, getHeight() - 50, 600, 30);
@@ -239,6 +242,7 @@ public class GamePanel extends JPanel {
         add(wireLabel);
         add(temporalLabel);
         add(packetLossLabel);
+        add(deliveredLabel);
         add(coinsLabel);
         add(instructionLabel);
         add(shopButton);
@@ -710,6 +714,7 @@ public class GamePanel extends JPanel {
             wireLabel.setVisible(showHUD);
             temporalLabel.setVisible(showHUD);
             packetLossLabel.setVisible(showHUD);
+            deliveredLabel.setVisible(showHUD);
             coinsLabel.setVisible(showHUD);
             instructionLabel.setVisible(showHUD);
             lastHUDToggle = currentTime;
@@ -719,7 +724,18 @@ public class GamePanel extends JPanel {
     public void updateHUD() {
         wireLabel.setText("Wire: " + game.getRemainingWireLength());
         temporalLabel.setText("Time: " + game.getTemporalProgress());
-        packetLossLabel.setText("Packet Loss: " + game.getPacketLoss() + "%");
+        
+        // Update packet loss label with more details
+        packetLossLabel.setText(String.format("Packet Loss: %d%% (%d lost / %d delivered / %d total)",
+            game.getPacketLoss(),
+            game.getTotalPacketsLost(),
+            game.getTotalPacketsDelivered(),
+            game.getTotalPacketsGenerated()));
+        
+        deliveredLabel.setText(String.format("Delivered: %d (In transit: %d)", 
+            game.getTotalPacketsDelivered(),
+            game.getTotalPacketsGenerated() - game.getTotalPacketsDelivered()));
+        
         coinsLabel.setText("Coins: " + game.getCoins());
     }
     
@@ -772,6 +788,10 @@ public class GamePanel extends JPanel {
                               ", Active: " + system.isActive() +
                               ", InputPorts: " + system.getInputPorts().size() +
                               ", OutputPorts: " + system.getOutputPorts().size());
+            
+            if (system instanceof DestinationSystem) {
+                System.out.println("    Packets received: " + ((DestinationSystem) system).getPacketsReceived());
+            }
         }
         
         // Check wires
@@ -781,6 +801,14 @@ public class GamePanel extends JPanel {
                               ", Destination=" + wire.getDestinationPort().getClass().getSimpleName() +
                               ", Packets=" + wire.getPacketsOnWire().size());
         }
+        
+        // Show packet statistics
+        System.out.println("Packet statistics:");
+        System.out.println("  Generated: " + game.getTotalPacketsGenerated());
+        System.out.println("  Delivered: " + game.getTotalPacketsDelivered());
+        System.out.println("  Lost: " + game.getTotalPacketsLost());
+        System.out.println("  In transit: " + (game.getTotalPacketsGenerated() - game.getTotalPacketsDelivered() - game.getTotalPacketsLost()));
+        System.out.println("  Loss rate: " + game.getPacketLoss() + "%");
         
         System.out.println("------------------");
     }

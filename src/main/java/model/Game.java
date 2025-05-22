@@ -24,6 +24,7 @@ public class Game {
     private boolean collisionDisabled;
     private int totalPacketsGenerated;
     private int totalPacketsLost;
+    private int totalPacketsDelivered;
     
     private Game() {
         systems = new ArrayList<>();
@@ -39,6 +40,7 @@ public class Game {
         collisionDisabled = false;
         totalPacketsGenerated = 0;
         totalPacketsLost = 0;
+        totalPacketsDelivered = 0;
     }
     
     public static Game getInstance() {
@@ -71,10 +73,25 @@ public class Game {
             return;
         }
         
+        // Log current packet status before update
+        System.out.println("\n===== GAME STATUS UPDATE =====");
+        System.out.println("Total packets generated: " + totalPacketsGenerated);
+        System.out.println("Total packets delivered: " + totalPacketsDelivered);
+        System.out.println("Total packets lost: " + totalPacketsLost);
+        System.out.println("Current packet loss: " + packetLoss + "%");
+        System.out.println("============================\n");
+        
         // Update all systems
         for (NetworkSystem system : systems) {
             system.update();
         }
+        
+        // Count packets currently on wires for debugging
+        int packetsInTransit = 0;
+        for (Wire wire : wires) {
+            packetsInTransit += wire.getPacketsOnWire().size();
+        }
+        System.out.println("Packets currently in transit: " + packetsInTransit);
         
         // Update all wires
         for (Wire wire : wires) {
@@ -87,6 +104,7 @@ public class Game {
         // نمایش اطلاعات جاری packet loss هر 30 فریم (حدود 0.5 ثانیه)
         if (temporalProgress % 30 == 0) {
             System.out.println("Current stats - Total packets: " + totalPacketsGenerated + 
+                             ", Delivered: " + totalPacketsDelivered +
                              ", Lost packets: " + totalPacketsLost + 
                              ", Loss percentage: " + packetLoss + "%");
         }
@@ -230,6 +248,14 @@ public class Game {
             return;
         }
         
+        if (Constants.DEBUG_COLLISIONS) {
+            System.out.println("\n*** COLLISION DETECTED ***");
+            System.out.println("Packet 1: pos=" + packet1.getPosition().x + "," + packet1.getPosition().y + 
+                              " size=" + packet1.getSize() + " noise=" + packet1.getNoise());
+            System.out.println("Packet 2: pos=" + packet2.getPosition().x + "," + packet2.getPosition().y + 
+                              " size=" + packet2.getSize() + " noise=" + packet2.getNoise());
+        }
+        
         // Play collision sound
         SoundManager.getInstance().playSound("collision");
         
@@ -239,10 +265,6 @@ public class Game {
             (packet1.getPosition().y + packet2.getPosition().y) / 2
         );
         
-        System.out.println("Collision between packets at " + collisionPoint.x + "," + collisionPoint.y);
-        System.out.println("Packet 1: size=" + packet1.getSize() + ", noise=" + packet1.getNoise());
-        System.out.println("Packet 2: size=" + packet2.getSize() + ", noise=" + packet2.getNoise());
-        
         // Add noise carefully - ensure we don't immediately lose packets if they're at size-1 noise
         if (packet1.getNoise() + Constants.IMPACT_NOISE_AMOUNT >= packet1.getSize() &&
             packet2.getNoise() + Constants.IMPACT_NOISE_AMOUNT >= packet2.getSize()) {
@@ -251,21 +273,30 @@ public class Game {
                 // Add full noise to packet1, reduced noise to packet2
                 packet1.addNoise(Constants.IMPACT_NOISE_AMOUNT);
                 packet2.addNoise(Math.max(0, packet2.getSize() - packet2.getNoise() - 1));
-                System.out.println("Reduced noise for packet 2 to prevent simultaneous loss");
+                if (Constants.DEBUG_COLLISIONS) {
+                    System.out.println("Reduced noise for packet 2 to prevent simultaneous loss");
+                }
             } else {
                 // Add full noise to packet2, reduced noise to packet1
                 packet2.addNoise(Constants.IMPACT_NOISE_AMOUNT);
                 packet1.addNoise(Math.max(0, packet1.getSize() - packet1.getNoise() - 1));
-                System.out.println("Reduced noise for packet 1 to prevent simultaneous loss");
+                if (Constants.DEBUG_COLLISIONS) {
+                    System.out.println("Reduced noise for packet 1 to prevent simultaneous loss");
+                }
             }
         } else {
             // Regular noise addition
             packet1.addNoise(Constants.IMPACT_NOISE_AMOUNT);
             packet2.addNoise(Constants.IMPACT_NOISE_AMOUNT);
+            if (Constants.DEBUG_COLLISIONS) {
+                System.out.println("Added normal impact noise to both packets");
+            }
         }
         
-        System.out.println("After collision - Packet 1: noise=" + packet1.getNoise());
-        System.out.println("After collision - Packet 2: noise=" + packet2.getNoise());
+        if (Constants.DEBUG_COLLISIONS) {
+            System.out.println("After collision - Packet 1: noise=" + packet1.getNoise());
+            System.out.println("After collision - Packet 2: noise=" + packet2.getNoise());
+        }
         
         // Check if packets are lost due to noise
         checkPacketLoss(packet1);
@@ -273,9 +304,16 @@ public class Game {
         
         // Apply impact to nearby packets
         applyImpactToNearbyPackets(collisionPoint, Constants.IMPACT_RADIUS);
+        
+        // Force recalculation of packet loss
+        forceUpdatePacketLoss();
+        
+        if (Constants.DEBUG_COLLISIONS) {
+            System.out.println("*** END OF COLLISION HANDLING ***\n");
+        }
     }
     
-    private void checkPacketLoss(Packet packet) {
+    public void checkPacketLoss(Packet packet) {
         if (packet.isLost()) {
             // Play packet lost sound
             SoundManager.getInstance().playSound("packet_lost");
@@ -285,13 +323,18 @@ public class Game {
                 if (wire.getPacketsOnWire().contains(packet)) {
                     wire.removePacket(packet);
                     totalPacketsLost++;
+                    
+                    // Log detailed packet loss information
+                    System.out.println("===== PACKET LOST =====");
+                    System.out.println("Packet lost due to noise: " + packet.getNoise() + " >= " + packet.getSize());
+                    System.out.println("Total generated: " + totalPacketsGenerated);
+                    System.out.println("Total lost: " + totalPacketsLost);
+                    System.out.println("Total delivered: " + totalPacketsDelivered);
+                    
+                    // Explicitly recalculate packet loss percentage on every loss
                     updatePacketLossPercentage();
                     
-                    // چاپ وضعیت فعلی packet loss
-                    System.out.println("Packet Lost! Total packets: " + totalPacketsGenerated + 
-                                     ", Lost packets: " + totalPacketsLost + 
-                                     ", Loss percentage: " + packetLoss + "%");
-                    
+                    System.out.println("=====================");
                     break;
                 }
             }
@@ -490,6 +533,7 @@ public class Game {
         collisionDisabled = false;
         totalPacketsGenerated = 0;
         totalPacketsLost = 0;
+        totalPacketsDelivered = 0;
     }
     
     public void incrementTotalPacketsGenerated() {
@@ -512,14 +556,25 @@ public class Game {
         return totalPacketsLost;
     }
     
+    public int getTotalPacketsDelivered() {
+        return totalPacketsDelivered;
+    }
+    
     private void updatePacketLossPercentage() {
-        if (totalPacketsGenerated > 0) {
-            int oldPacketLoss = packetLoss;
-            packetLoss = (totalPacketsLost * 100) / totalPacketsGenerated;
+        int oldPacketLoss = packetLoss;
+        
+        // We should only consider packets that have either been lost or successfully delivered
+        int processedPackets = totalPacketsLost + totalPacketsDelivered;
+        
+        if (processedPackets > 0) {
+            // Calculate packet loss as a percentage of processed packets, not generated packets
+            packetLoss = (totalPacketsLost * 100) / processedPackets;
             
             // Debug output to understand the calculation
             System.out.println("PACKET LOSS CALCULATION: Lost=" + totalPacketsLost + 
-                              ", Generated=" + totalPacketsGenerated + 
+                              ", Delivered=" + totalPacketsDelivered + 
+                              ", Total processed=" + processedPackets +
+                              ", Total generated=" + totalPacketsGenerated +
                               ", Old percentage=" + oldPacketLoss +
                               ", New percentage=" + packetLoss);
                               
@@ -531,5 +586,34 @@ public class Game {
         } else {
             packetLoss = 0;
         }
+    }
+    
+    // Add method to track successful packet delivery
+    public void incrementPacketsDelivered() {
+        totalPacketsDelivered++;
+        updatePacketLossPercentage();
+        System.out.println("Packet successfully delivered! Total delivered: " + totalPacketsDelivered);
+    }
+    
+    // Run this method to explicitly force a recalculation of packet loss percentage
+    public void forceUpdatePacketLoss() {
+        updatePacketLossPercentage();
+        
+        // Print detailed diagnostic information
+        System.out.println("\n====== PACKET LOSS DIAGNOSTICS ======");
+        System.out.println("Total packets generated: " + totalPacketsGenerated);
+        System.out.println("Total packets delivered: " + totalPacketsDelivered);
+        System.out.println("Total packets lost: " + totalPacketsLost);
+        System.out.println("Total processed packets: " + (totalPacketsDelivered + totalPacketsLost));
+        System.out.println("Packets in transit: " + (totalPacketsGenerated - totalPacketsDelivered - totalPacketsLost));
+        System.out.println("Current packet loss: " + packetLoss + "%");
+        System.out.println("====================================\n");
+    }
+    
+    // Add method to track lost packets
+    public void incrementPacketsLost() {
+        totalPacketsLost++;
+        updatePacketLossPercentage();
+        System.out.println("Packet lost! Total lost: " + totalPacketsLost);
     }
 } 

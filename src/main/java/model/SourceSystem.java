@@ -55,16 +55,12 @@ public class SourceSystem extends NetworkSystem {
     
     @Override
     public void update() {
-        System.out.println("SourceSystem.update() called - counter: " + packetCounter + ", frequency: " + packetGenerationFrequency);
-        
-        if (!isActive()) {
-            System.out.println("SourceSystem is not active, skipping update");
-            return;
-        }
+        if (!isActive()) return;
         
         packetCounter++;
+        
+        // Check if it's time to generate a new packet
         if (packetCounter >= packetGenerationFrequency) {
-            System.out.println("Time to generate packet!");
             generatePacket();
             packetCounter = 0;
         }
@@ -83,7 +79,8 @@ public class SourceSystem extends NetworkSystem {
         Port outputPort = outputPorts.get(random.nextInt(outputPorts.size()));
         Point packetPosition = new Point(outputPort.getPosition());
         
-        System.out.println("Generating packet at " + packetPosition.x + "," + packetPosition.y);
+        System.out.println("\n== GENERATING NEW PACKET ==");
+        System.out.println("Position: " + packetPosition.x + "," + packetPosition.y);
         
         // Create the appropriate packet type
         Packet newPacket;
@@ -98,13 +95,9 @@ public class SourceSystem extends NetworkSystem {
         // Set source port on the packet
         newPacket.setSourcePort(outputPort);
         
-        // افزایش شمارنده‌های پکت
+        // Increment packet counters
         localPacketsGenerated++;
         Game.getInstance().incrementTotalPacketsGenerated();
-        System.out.println("Packet #" + localPacketsGenerated + " created by this source. Total packets in game: " + 
-                          Game.getInstance().getTotalPacketsGenerated() + 
-                          ", Lost packets: " + Game.getInstance().getTotalPacketsLost() + 
-                          ", Current loss %: " + Game.getInstance().getPacketLoss());
         
         // Find connected wire and send packet through it
         boolean packetSent = false;
@@ -119,9 +112,14 @@ public class SourceSystem extends NetworkSystem {
         
         if (!packetSent) {
             System.err.println("WARNING: No wire connected to output port - packet not sent");
-            // If a packet is created but cannot be sent, don't count it as lost
+            // If a packet is created but cannot be sent, don't count it as generated
             Game.getInstance().decrementTotalPacketsGenerated();
+        } else {
+            // Log detailed packet stats only if packet was actually sent
+            Game.getInstance().forceUpdatePacketLoss();
         }
+        
+        System.out.println("================================");
     }
     
     public void randomizePacketCounter() {

@@ -83,24 +83,56 @@ public class Wire {
     }
     
     public void update() {
+        if (Constants.DEBUG_PACKET_MOVEMENT) {
+            System.out.println("\n----- WIRE UPDATE: " + packetsOnWire.size() + " packets -----");
+            if (!packetsOnWire.isEmpty()) {
+                System.out.println("  From: " + sourcePort.getPosition().x + "," + sourcePort.getPosition().y);
+                System.out.println("  To: " + destinationPort.getPosition().x + "," + destinationPort.getPosition().y);
+                System.out.println("  Wire length: " + length);
+            }
+        }
+
         // Update all packets on the wire using their physics-based movement
         for (Packet packet : new ArrayList<>(packetsOnWire)) {
-            // Debug packet position before update
-            System.out.println("Packet before update: " + packet.getPosition().x + "," + packet.getPosition().y);
+            if (Constants.DEBUG_PACKET_MOVEMENT) {
+                System.out.println("  Packet before update: " + packet.getPosition().x + "," + packet.getPosition().y);
+            }
             
             // If the packet is not moving, start moving it toward the destination
             if (!packet.isMoving()) {
-                System.out.println("Starting packet movement on wire from " + sourcePort.getPosition().x + "," + sourcePort.getPosition().y +
+                if (Constants.DEBUG_PACKET_MOVEMENT) {
+                    System.out.println("  Starting packet movement on wire from " + sourcePort.getPosition().x + "," + sourcePort.getPosition().y +
                                   " to " + destinationPort.getPosition().x + "," + destinationPort.getPosition().y);
+                }
+                
+                // برای پکت‌های مثلثی، مطمئن شویم که سرعت اولیه کافی دارند
+                if (packet instanceof TrianglePacket) {
+                    packet.currentSpeed = 1.5;
+                }
+                
                 packet.startMoving(destinationPort.getPosition(), sourcePort);
             }
             
             // Now update the packet's position based on physics
             packet.update();
             
-            // Debug packet position after update
-            System.out.println("Packet after update: " + packet.getPosition().x + "," + packet.getPosition().y + 
+            if (Constants.DEBUG_PACKET_MOVEMENT) {
+                System.out.println("  Packet after update: " + packet.getPosition().x + "," + packet.getPosition().y + 
                               ", isMoving: " + packet.isMoving() + ", speed: " + packet.getCurrentSpeed());
+            }
+            
+            // بررسی اگر پکت مدتی است که تکان نخورده
+            Point packetPos = packet.getPosition();
+            
+            // Check if the packet is lost due to noise
+            if (packet.isLost()) {
+                if (Constants.DEBUG_PACKET_LOSS) {
+                    System.out.println("  Packet lost check in Wire.update() - calling Game.checkPacketLoss()");
+                }
+                Game.getInstance().checkPacketLoss(packet);
+                // Skip further processing for this packet as it's now lost
+                continue;
+            }
             
             // Check if packet has reached destination
             double distanceToTarget = Math.sqrt(
@@ -108,16 +140,24 @@ public class Wire {
                 Math.pow(destinationPort.getPosition().y - packet.getPosition().y, 2)
             );
             
-            System.out.println("Distance to destination: " + distanceToTarget);
+            if (Constants.DEBUG_PACKET_MOVEMENT) {
+                System.out.println("  Distance to destination: " + distanceToTarget);
+            }
             
             // Use a more reliable way to detect arrival - either very close or stopped moving
             if (distanceToTarget < 10) {
-                System.out.println("Packet reached destination port!");
+                if (Constants.DEBUG_PACKET_MOVEMENT) {
+                    System.out.println("  PACKET REACHED DESTINATION!");
+                }
                 // Set position exactly to destination to avoid floating point errors
                 packet.setPosition(new Point(destinationPort.getPosition()));
                 destinationPort.getParentSystem().receivePacket(packet);
                 removePacket(packet);
             }
+        }
+        
+        if (Constants.DEBUG_PACKET_MOVEMENT && !packetsOnWire.isEmpty()) {
+            System.out.println("----- WIRE UPDATE COMPLETE: " + packetsOnWire.size() + " packets remain -----\n");
         }
     }
     
@@ -182,6 +222,13 @@ public class Wire {
         }
         
         packetsOnWire.add(packet);
+        
+        // اطمینان از شروع حرکت پکت با سرعت کافی
+        // برای پکت‌های مثلثی، سرعت اولیه را کمی بیشتر می‌کنیم
+        if (packet instanceof TrianglePacket) {
+            packet.currentSpeed = 1.5; // سرعت اولیه بیشتر برای پکت‌های مثلثی
+        }
+        
         packet.startMoving(destinationPort.getPosition(), sourcePort);
     }
     
