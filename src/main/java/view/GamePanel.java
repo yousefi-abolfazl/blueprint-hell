@@ -21,7 +21,7 @@ public class GamePanel extends JPanel {
     private List<NetworkSystem> systems;
     private List<Wire> wires;
     
-    // HUD components
+    
     private JLabel wireLabel;
     private JLabel temporalLabel;
     private JLabel packetLossLabel;
@@ -29,7 +29,7 @@ public class GamePanel extends JPanel {
     private JLabel coinsLabel;
     private JLabel instructionLabel;
     
-    // UI flags for controls
+    
     private boolean showHUD = true;
     private long lastHUDToggle = 0;
     
@@ -45,12 +45,12 @@ public class GamePanel extends JPanel {
         initializeHUD();
         initializeControls();
         
-        // Add focus listener to help debug focus issues
+        
         addFocusListener(new FocusAdapter() {
             @Override
             public void focusGained(FocusEvent e) {
                 System.out.println("GamePanel gained focus");
-                repaint(); // Repaint when focus is gained
+                repaint(); 
             }
             
             @Override
@@ -59,11 +59,11 @@ public class GamePanel extends JPanel {
             }
         });
         
-        // Add key binding as an alternative to key listener
+        
         InputMap inputMap = getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
         ActionMap actionMap = getActionMap();
         
-        // Add Space key binding
+        
         inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0), "toggleGameRunning");
         actionMap.put("toggleGameRunning", new AbstractAction() {
             @Override
@@ -75,7 +75,7 @@ public class GamePanel extends JPanel {
             }
         });
         
-        // Add Right arrow key binding
+        
         inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, 0), "advanceTime");
         actionMap.put("advanceTime", new AbstractAction() {
             @Override
@@ -89,7 +89,7 @@ public class GamePanel extends JPanel {
             }
         });
         
-        // Add Left arrow key binding
+        
         inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, 0), "rewindTime");
         actionMap.put("rewindTime", new AbstractAction() {
             @Override
@@ -103,7 +103,7 @@ public class GamePanel extends JPanel {
             }
         });
         
-        // Add S key binding for shop
+        
         inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_S, 0), "showShop");
         actionMap.put("showShop", new AbstractAction() {
             @Override
@@ -113,7 +113,7 @@ public class GamePanel extends JPanel {
             }
         });
         
-        // Add H key binding for HUD toggle
+        
         inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_H, 0), "toggleHUD");
         actionMap.put("toggleHUD", new AbstractAction() {
             @Override
@@ -124,29 +124,29 @@ public class GamePanel extends JPanel {
             }
         });
         
-        // Create a timer for regular updates
+        
         Timer gameUpdateTimer = new Timer(16, e -> {
             if (isGameRunning && !game.isPaused()) {
                 System.out.println("Game update timer tick at " + System.currentTimeMillis());
                 
-                // First update all systems for packet generation
+                
                 for (NetworkSystem system : systems) {
                     if (system instanceof SourceSystem) {
                         system.update();
                     }
                 }
                 
-                // Then update all non-source systems
+                
                 for (NetworkSystem system : systems) {
                     if (!(system instanceof SourceSystem)) {
                         system.update();
                     }
                 }
                 
-                // Then update all wires one by one to avoid simultaneous collisions
+                
                 for (Wire wire : wires) {
                     wire.update();
-                    // Small yield to avoid wire updates happening in the same "moment"
+                    
                     try {
                         Thread.sleep(1); 
                     } catch(InterruptedException ex) {
@@ -154,52 +154,52 @@ public class GamePanel extends JPanel {
                     }
                 }
                 
-                // Finally update game state for collisions
+                
                 game.update();
                 
-                // Update UI
+                
                 updateHUD();
                 repaint();
             }
         });
         gameUpdateTimer.start();
         
-        // Force focus request on this panel
+        
         SwingUtilities.invokeLater(this::forceFocus);
     }
     
-    // Method to aggressively request focus
+    
     public void forceFocus() {
         System.out.println("Forcing focus on GamePanel");
         requestFocusInWindow();
         requestFocus();
         
-        // More aggressive focus request
+        
         SwingUtilities.invokeLater(() -> {
             System.out.println("Requesting focus in invoke later");
             requestFocusInWindow();
             requestFocus();
             
-            // Try to make the panel the focus owner
+            
             KeyboardFocusManager.getCurrentKeyboardFocusManager()
                 .clearGlobalFocusOwner();
             requestFocusInWindow();
             
-            // Try to make window active
+            
             Window window = SwingUtilities.getWindowAncestor(this);
             if (window != null) {
                 window.toFront();
             }
         });
         
-        // Create a recurring timer that checks for focus
+        
         Timer focusTimer = new Timer(500, e -> {
             if (!hasFocus()) {
                 System.out.println("GamePanel doesn't have focus - requesting again");
                 requestFocusInWindow();
                 requestFocus();
                 
-                // Try to make the panel the focus owner
+                
                 KeyboardFocusManager.getCurrentKeyboardFocusManager()
                     .clearGlobalFocusOwner();
                 requestFocusInWindow();
@@ -226,13 +226,13 @@ public class GamePanel extends JPanel {
         deliveredLabel.setBounds(20, 110, 150, 30);
         coinsLabel.setBounds(20, 140, 150, 30);
         
-        // Position instruction label at the bottom of the screen
+        
         instructionLabel.setBounds(20, getHeight() - 50, 600, 30);
         
-        // Add shop button to the top right
+        
         JButton shopButton = new JButton("Shop");
         shopButton.setBounds(getWidth() - 100, 20, 80, 30);
-        shopButton.setBackground(new Color(255, 193, 7)); // Amber color
+        shopButton.setBackground(new Color(255, 193, 7)); 
         shopButton.setForeground(Color.BLACK);
         shopButton.setFocusPainted(false);
         shopButton.setBorder(BorderFactory.createRaisedBevelBorder());
@@ -247,7 +247,7 @@ public class GamePanel extends JPanel {
         add(instructionLabel);
         add(shopButton);
         
-        // Add component listener to reposition elements when panel resizes
+        
         addComponentListener(new ComponentAdapter() {
             @Override
             public void componentResized(ComponentEvent e) {
@@ -265,13 +265,13 @@ public class GamePanel extends JPanel {
     }
     
     private void initializeControls() {
-        // Mouse listener for port selection and wiring
+        
         addMouseListener(new MouseAdapter() {
             @Override
             public void mousePressed(MouseEvent e) {
                 if (isGameRunning) return;
                 
-                // Check if clicked on a port
+                
                 Port clickedPort = findPortAt(e.getPoint());
                 if (clickedPort != null && !clickedPort.isInput()) {
                     selectedPort = clickedPort;
@@ -311,12 +311,12 @@ public class GamePanel extends JPanel {
             }
         });
         
-        // Mouse motion listener for updating wire end point
+        
         addMouseMotionListener(new MouseMotionAdapter() {
             @Override
             public void mouseDragged(MouseEvent e) {
                 if (isWiring) {
-                    // بهبود پاسخگویی در زمان درگ کردن
+                    
                     SwingUtilities.invokeLater(() -> {
                         wireEndPoint = e.getPoint();
                         repaint(selectedPort.getPosition().x - 100, selectedPort.getPosition().y - 100, 
@@ -327,7 +327,7 @@ public class GamePanel extends JPanel {
             }
         });
         
-        // Key listener for game controls
+        
         addKeyListener(new KeyAdapter() {
             @Override
             public void keyPressed(KeyEvent e) {
@@ -369,58 +369,58 @@ public class GamePanel extends JPanel {
     private void showShop() {
         System.out.println("Opening shop...");
         
-        // Store the current game running state before pausing
+        
         boolean wasRunning = isGameRunning;
         if (isGameRunning) {
-            // Temporarily pause the game while shop is open
+            
             isGameRunning = false;
         }
         
-        // Ensure the game is paused
+        
         game.setPaused(true);
         
-        // Create and configure the shop dialog
+        
         ShopView shopView = new ShopView(GameFrame.getINSTANCE());
         
-        // Add window listener to handle shop closing
+        
         shopView.addWindowListener(new java.awt.event.WindowAdapter() {
             @Override
             public void windowClosed(java.awt.event.WindowEvent e) {
                 System.out.println("Shop closed, returning focus to GamePanel");
                 
-                // Request focus back
+                
                 requestFocusInWindow();
                 forceFocus();
                 
-                // Restore previous game state
+                
                 if (wasRunning) {
                     isGameRunning = true;
                 }
                 
-                // Unpause the game if it was running before
+                
                 game.setPaused(!wasRunning);
                 
-                // Update UI
+                
                 updateHUD();
                 repaint();
             }
         });
         
-        // Show the shop dialog
+        
         shopView.setLocationRelativeTo(GameFrame.getINSTANCE());
         shopView.setVisible(true);
     }
     
     private Port findPortAt(Point point) {
         for (NetworkSystem system : systems) {
-            // Check input ports
+            
             for (Port port : system.getInputPorts()) {
                 if (isPointNearPort(point, port)) {
                     return port;
                 }
             }
             
-            // Check output ports
+            
             for (Port port : system.getOutputPorts()) {
                 if (isPointNearPort(point, port)) {
                     return port;
@@ -441,13 +441,13 @@ public class GamePanel extends JPanel {
     }
     
     public void loadLevel(int level) {
-        // Clear existing data
+        
         systems.clear();
         wires.clear();
         game.resetGame();
         game.setCurrentLevel(level);
         
-        // Load systems and ports for the level
+        
         if (level == 1) {
             setupLevel1();
         } else if (level == 2) {
@@ -460,20 +460,20 @@ public class GamePanel extends JPanel {
     }
     
     private void setupLevel1() {
-        // Example level 1 setup with a few systems
+        
         int systemWidth = 100;
         int systemHeight = 80;
         
-        // Source system generating square packets
+        
         SourceSystem source1 = new SourceSystem(
             new Point(100, 200), 
             systemWidth, 
             systemHeight, 
-            60, // Generate a packet every 60 frames (increased from 20)
-            true // Generate square packets
+            60, 
+            true 
         );
         
-        // Add output ports to source
+        
         SquarePort sourcePort1 = new SquarePort(
             new Point(100 + systemWidth, 220),
             false, 
@@ -481,18 +481,18 @@ public class GamePanel extends JPanel {
         );
         source1.addOutputPort(sourcePort1);
         
-        // Add the source to our lists
+        
         systems.add(source1);
         game.addSystem(source1);
         
-        // Regular system with square input and output
+        
         StandardSystem system1 = new StandardSystem(
             new Point(300, 200),
             systemWidth,
             systemHeight
         );
         
-        // Add ports to regular system
+        
         SquarePort system1InputPort = new SquarePort(
             new Point(300, 220),
             true,
@@ -507,18 +507,18 @@ public class GamePanel extends JPanel {
         system1.addInputPort(system1InputPort);
         system1.addOutputPort(system1OutputPort);
         
-        // Add the system to our lists
+        
         systems.add(system1);
         game.addSystem(system1);
         
-        // Destination system for packets
+        
         DestinationSystem dest1 = new DestinationSystem(
             new Point(500, 200),
             systemWidth,
             systemHeight
         );
         
-        // Add input port to destination
+        
         SquarePort destPort1 = new SquarePort(
             new Point(500, 220),
             true,
@@ -526,26 +526,26 @@ public class GamePanel extends JPanel {
         );
         dest1.addInputPort(destPort1);
         
-        // Add the destination to our lists
+        
         systems.add(dest1);
         game.addSystem(dest1);
     }
     
     private void setupLevel2() {
-        // More complex level 2 with mixed packet types
+        
         int systemWidth = 100;
         int systemHeight = 80;
         
-        // Source system generating square packets
+        
         SourceSystem squareSource = new SourceSystem(
             new Point(100, 150), 
             systemWidth, 
             systemHeight, 
-            60, // Generate a packet every 60 frames (increased from 20)
-            true // square packets
+            60, 
+            true 
         );
         
-        // Add output port to square source
+        
         SquarePort squareSourcePort = new SquarePort(
             new Point(100 + systemWidth, 170),
             false, 
@@ -553,16 +553,16 @@ public class GamePanel extends JPanel {
         );
         squareSource.addOutputPort(squareSourcePort);
         
-        // Source system generating triangle packets
+        
         SourceSystem triangleSource = new SourceSystem(
             new Point(100, 300), 
             systemWidth, 
             systemHeight, 
-            80, // Generate a packet every 80 frames (increased from 30)
-            false // triangle packets
+            80, 
+            false 
         );
         
-        // Add output port to triangle source
+        
         TrianglePort triangleSourcePort = new TrianglePort(
             new Point(100 + systemWidth, 320),
             false, 
@@ -570,13 +570,13 @@ public class GamePanel extends JPanel {
         );
         triangleSource.addOutputPort(triangleSourcePort);
         
-        // Add sources to lists
+        
         systems.add(squareSource);
         systems.add(triangleSource);
         game.addSystem(squareSource);
         game.addSystem(triangleSource);
         
-        // Intermediate systems
+        
         StandardSystem system1 = new StandardSystem(
             new Point(300, 150),
             systemWidth,
@@ -589,7 +589,7 @@ public class GamePanel extends JPanel {
             systemHeight
         );
         
-        // Add ports to system1
+        
         SquarePort system1InputSquare = new SquarePort(
             new Point(300, 170),
             true,
@@ -610,7 +610,7 @@ public class GamePanel extends JPanel {
         system1.addInputPort(system1InputTriangle);
         system1.addOutputPort(system1Output);
         
-        // Add ports to system2
+        
         TrianglePort system2InputTriangle = new TrianglePort(
             new Point(300, 320),
             true,
@@ -631,13 +631,13 @@ public class GamePanel extends JPanel {
         system2.addInputPort(system2InputSquare);
         system2.addOutputPort(system2Output);
         
-        // Add systems to lists
+        
         systems.add(system1);
         systems.add(system2);
         game.addSystem(system1);
         game.addSystem(system2);
         
-        // Destination systems
+        
         DestinationSystem squareDest = new DestinationSystem(
             new Point(500, 150),
             systemWidth,
@@ -650,7 +650,7 @@ public class GamePanel extends JPanel {
             systemHeight
         );
         
-        // Add input ports to destinations
+        
         SquarePort squareDestInput = new SquarePort(
             new Point(500, 170),
             true,
@@ -665,7 +665,7 @@ public class GamePanel extends JPanel {
         );
         triangleDest.addInputPort(triangleDestInput);
         
-        // Add destinations to lists
+        
         systems.add(squareDest);
         systems.add(triangleDest);
         game.addSystem(squareDest);
@@ -679,22 +679,22 @@ public class GamePanel extends JPanel {
         if (isGameRunning) {
             System.out.println("Game started running");
             
-            // Make sure all source systems are active, but don't force generate packets immediately
+            
             for (NetworkSystem system : systems) {
                 if (system instanceof SourceSystem) {
                     System.out.println("Activating source system");
                     system.setActive(true);
                     
-                    // Instead of forcing packet generation immediately, stagger them
+                    
                     SourceSystem sourceSystem = (SourceSystem) system;
-                    // Reset counter to a random value to stagger packet generation
+                    
                     sourceSystem.randomizePacketCounter();
                 }
             }
             
             SoundManager.getInstance().playSound("game_start");
             
-            // Directly trigger an update
+            
             System.out.println("Triggering immediate update");
             update();
         } else {
@@ -702,14 +702,14 @@ public class GamePanel extends JPanel {
             SoundManager.getInstance().playSound("game_pause");
         }
         
-        // Update UI
+        
         updateHUD();
         repaint();
     }
     
     private void toggleHUD() {
         long currentTime = System.currentTimeMillis();
-        if (currentTime - lastHUDToggle > 250) { // Debounce toggle
+        if (currentTime - lastHUDToggle > 250) { 
             showHUD = !showHUD;
             wireLabel.setVisible(showHUD);
             temporalLabel.setVisible(showHUD);
@@ -725,7 +725,7 @@ public class GamePanel extends JPanel {
         wireLabel.setText("Wire: " + game.getRemainingWireLength());
         temporalLabel.setText("Time: " + game.getTemporalProgress());
         
-        // Update packet loss label with more details
+        
         packetLossLabel.setText(String.format("Packet Loss: %d%% (%d lost / %d delivered / %d total)",
             game.getPacketLoss(),
             game.getTotalPacketsLost(),
@@ -743,28 +743,28 @@ public class GamePanel extends JPanel {
         if (isGameRunning && !game.isPaused()) {
             System.out.println("Updating game state...");
             
-            // Display system status
+            
             displayStatus();
             
-            // Update all systems directly in addition to calling game.update()
+            
             for (NetworkSystem system : systems) {
                 System.out.println("Updating system: " + system.getClass().getSimpleName());
                 if (system instanceof SourceSystem) {
-                    // Ensure source systems are always active when game is running
+                    
                     system.setActive(true);
                     System.out.println("Ensuring source system is active");
                 }
                 system.update();
             }
             
-            // Update all wires directly and log their packet counts
+            
             for (Wire wire : wires) {
                 int packetCount = wire.getPacketsOnWire().size();
                 System.out.println("Updating wire with " + packetCount + " packets");
                 wire.update();
             }
             
-            // Also call the game's update method which handles collisions etc.
+            
             game.update();
             
             if (game.isGameOver()) {
@@ -781,7 +781,7 @@ public class GamePanel extends JPanel {
     private void displayStatus() {
         System.out.println("--- GAME STATUS ---");
         
-        // Check systems
+        
         System.out.println("Systems: " + systems.size());
         for (NetworkSystem system : systems) {
             System.out.println("  System: " + system.getClass().getSimpleName() + 
@@ -794,7 +794,7 @@ public class GamePanel extends JPanel {
             }
         }
         
-        // Check wires
+        
         System.out.println("Wires: " + wires.size());
         for (Wire wire : wires) {
             System.out.println("  Wire: Source=" + wire.getSourcePort().getClass().getSimpleName() + 
@@ -802,7 +802,7 @@ public class GamePanel extends JPanel {
                               ", Packets=" + wire.getPacketsOnWire().size());
         }
         
-        // Show packet statistics
+        
         System.out.println("Packet statistics:");
         System.out.println("  Generated: " + game.getTotalPacketsGenerated());
         System.out.println("  Delivered: " + game.getTotalPacketsDelivered());
@@ -831,7 +831,7 @@ public class GamePanel extends JPanel {
         Graphics2D g2d = (Graphics2D) g;
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         
-        // Draw grid
+        
         g2d.setColor(Color.DARK_GRAY);
         int cellSize = 50;
         int width = getWidth();
@@ -849,26 +849,26 @@ public class GamePanel extends JPanel {
             g2d.drawLine(0, y, width, y);
         }
         
-        // Draw all wires
+        
         for (Wire wire : wires) {
             wire.render(g2d);
         }
         
-        // Draw all systems
+        
         for (NetworkSystem system : systems) {
             system.render(g2d);
         }
         
-        // Draw wire in progress
+        
         if (isWiring && selectedPort != null) {
             Port hoverPort = findPortAt(wireEndPoint);
             boolean isValidConnection = false;
             
-            // Check if we're hovering over a valid port for connection
+            
             if (hoverPort != null && hoverPort.isInput() && 
                 hoverPort.getParentSystem() != selectedPort.getParentSystem()) {
                 
-                // Calculate potential wire length
+                
                 int wireLength = (int) Math.sqrt(
                     Math.pow(hoverPort.getPosition().x - selectedPort.getPosition().x, 2) +
                     Math.pow(hoverPort.getPosition().y - selectedPort.getPosition().y, 2)
@@ -877,7 +877,7 @@ public class GamePanel extends JPanel {
                 isValidConnection = wireLength <= game.getRemainingWireLength();
             }
             
-            // Choose color based on connection validity
+            
             g2d.setColor(isValidConnection ? 
                          Constants.WIRE_ALLOWABLE_COLOR : 
                          Constants.WIRE_UNALLOWABLE_COLOR);
@@ -887,7 +887,7 @@ public class GamePanel extends JPanel {
             g2d.drawLine(sourcePos.x, sourcePos.y, wireEndPoint.x, wireEndPoint.y);
         }
         
-        // If no wiring is in progress and game is not running, show help text
+        
         if (!isWiring && !isGameRunning && systems.size() > 0) {
             g2d.setColor(new Color(255, 255, 255, 180));
             g2d.setFont(new Font("Arial", Font.BOLD, 16));

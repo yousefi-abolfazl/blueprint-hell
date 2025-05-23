@@ -20,11 +20,9 @@ public class SceneController {
         cardLayout = new CardLayout();
         contentPanel = new JPanel(cardLayout);
         
-        // Add scenes to card layout
         contentPanel.add(new MainMenuView(), "MainMenu");
         contentPanel.add(GamePanel.getInstance(), "GamePanel");
         
-        // Set up game timer for updates
         gameTimer = new Timer(16, e -> {
             if (currentCard.equals("GamePanel") && contentPanel.isShowing()) {
                 updateGame();
@@ -32,37 +30,30 @@ public class SceneController {
         });
         gameTimer.start();
         
-        // Set the content panel in the game frame
         GameFrame.getINSTANCE().setContentPane(contentPanel);
         GameFrame.getINSTANCE().revalidate();
         
-        // Initialize sound manager
         SoundManager.getInstance();
     }
     
     private void updateGame() {
         System.out.println("SceneController.updateGame() called at " + System.currentTimeMillis());
         
-        // Call the GamePanel update method directly
         GamePanel.getInstance().update();
         
-        // Update HUD and repaint
         GamePanel.getInstance().updateHUD();
         GamePanel.getInstance().repaint();
         
-        // Check game over condition
         if (Game.getInstance().isGameOver()) {
             showGameOver();
         }
         
-        // Check level completion
         if (isLevelComplete()) {
             showLevelComplete();
         }
     }
     
     private boolean isLevelComplete() {
-        // Level is complete if all destination systems have received packets
         Game game = Game.getInstance();
         int totalPacketsReceived = 0;
         int requiredPackets = 0;
@@ -70,7 +61,7 @@ public class SceneController {
         for (NetworkSystem system : game.getSystems()) {
             if (system instanceof DestinationSystem) {
                 totalPacketsReceived += ((DestinationSystem) system).getPacketsReceived();
-                requiredPackets += 5; // Each destination needs 5 packets
+                requiredPackets += 5;
             }
         }
         
@@ -96,10 +87,8 @@ public class SceneController {
         
         System.out.println("Starting game: requesting focus on GamePanel");
         
-        // Make sure panel gets focus so keyboard controls work
         SwingUtilities.invokeLater(() -> {
             GamePanel panel = GamePanel.getInstance();
-            // Force focus multiple times with delays
             forceFocusWithDelay(panel, 0);
             forceFocusWithDelay(panel, 100);
             forceFocusWithDelay(panel, 500);
@@ -127,10 +116,8 @@ public class SceneController {
         
         System.out.println("Starting level " + level + ": requesting focus on GamePanel");
         
-        // Make sure panel gets focus so keyboard controls work
         SwingUtilities.invokeLater(() -> {
             GamePanel panel = GamePanel.getInstance();
-            // Force focus multiple times with delays
             forceFocusWithDelay(panel, 0);
             forceFocusWithDelay(panel, 100);
             forceFocusWithDelay(panel, 500);
@@ -141,11 +128,9 @@ public class SceneController {
     }
     
     private void setupLevel(int level) {
-        // Reset game state
         Game.getInstance().resetGame();
         Game.getInstance().setCurrentLevel(level);
         
-        // Load level in the GamePanel
         GamePanel.getInstance().loadLevel(level);
     }
     
@@ -176,7 +161,7 @@ public class SceneController {
             JOptionPane.INFORMATION_MESSAGE
         );
         
-        if (currentLevel < 2) { // We have 2 levels total
+        if (currentLevel < 2) {
             startLevel(currentLevel + 1);
         } else {
             JOptionPane.showMessageDialog(

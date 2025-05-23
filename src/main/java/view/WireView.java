@@ -17,7 +17,7 @@ public class WireView {
         this.isValid = true;
     }
     
-    // For temporary wire display during placement
+    
     public WireView(Port sourcePort, Point targetPoint, boolean isValid) {
         this.wire = null;
         this.isValid = isValid;
@@ -29,7 +29,7 @@ public class WireView {
         g.setStroke(new BasicStroke(Constants.WIRE_THICKNESS));
         
         if (wire != null) {
-            // Draw permanent wire
+            
             Point sourcePos = wire.getSourcePort().getPosition();
             Point destPos = wire.getDestinationPort().getPosition();
             g.drawLine(sourcePos.x, sourcePos.y, destPos.x, destPos.y);

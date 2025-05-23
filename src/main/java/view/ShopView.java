@@ -13,11 +13,11 @@ public class ShopView extends JDialog {
     private JLabel coinsLabel;
     private Timer powerupDurationTimer;
     
-    // Labels to show remaining durations
+    
     private JLabel oAtarActiveLabel;
     private JLabel oAiryamanActiveLabel;
     
-    // Track if powerups are active
+    
     private boolean isOAtarActive = false;
     private boolean isOAiryamanActive = false;
     private int oAtarSecondsLeft = 0;
@@ -33,12 +33,12 @@ public class ShopView extends JDialog {
         setLocationRelativeTo(parent);
         setLayout(new BorderLayout());
         
-        // Set a nice background color
+        
         getContentPane().setBackground(new Color(35, 40, 50));
         
         initializeComponents();
         
-        // Set up the duration timer to update countdown labels
+        
         powerupDurationTimer = new Timer(1000, e -> updatePowerupDurations());
         powerupDurationTimer.start();
     }
@@ -62,7 +62,7 @@ public class ShopView extends JDialog {
     }
     
     private void updatePowerupDurations() {
-        // Update O'Atar timer if active
+        
         if (isOAtarActive) {
             oAtarSecondsLeft--;
             if (oAtarSecondsLeft <= 0) {
@@ -74,7 +74,7 @@ public class ShopView extends JDialog {
             }
         }
         
-        // Update O'Airyaman timer if active
+        
         if (isOAiryamanActive) {
             oAiryamanSecondsLeft--;
             if (oAiryamanSecondsLeft <= 0) {
@@ -88,7 +88,7 @@ public class ShopView extends JDialog {
     }
     
     private void initializeComponents() {
-        // Create a nice title panel
+        
         JPanel titlePanel = new JPanel(new BorderLayout());
         titlePanel.setBackground(new Color(25, 118, 210));
         titlePanel.setBorder(BorderFactory.createEmptyBorder(10, 15, 10, 15));
@@ -105,20 +105,20 @@ public class ShopView extends JDialog {
         
         add(titlePanel, BorderLayout.NORTH);
         
-        // Main panel with shop items
+        
         JPanel itemsPanel = new JPanel();
         itemsPanel.setLayout(new BoxLayout(itemsPanel, BoxLayout.Y_AXIS));
         itemsPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
         itemsPanel.setBackground(new Color(35, 40, 50));
         
-        // Create labels for power-up status
+        
         oAtarActiveLabel = new JLabel("Not Active");
         oAtarActiveLabel.setForeground(Color.GRAY);
         
         oAiryamanActiveLabel = new JLabel("Not Active");
         oAiryamanActiveLabel.setForeground(Color.GRAY);
         
-        // Add shop items with status labels
+        
         addShopItem(itemsPanel, "O' Atar", 
                 "Disable impact effects for 10 seconds", 
                 Constants.O_ATAR_COST, 
@@ -135,14 +135,14 @@ public class ShopView extends JDialog {
                 "Reset all packet noise to zero", 
                 Constants.O_ANAHITA_COST, 
                 e -> purchaseOAnahita(),
-                null); // No duration for this one
+                null); 
         
         JScrollPane scrollPane = new JScrollPane(itemsPanel);
         scrollPane.setBorder(null);
         scrollPane.getViewport().setBackground(new Color(35, 40, 50));
         add(scrollPane, BorderLayout.CENTER);
         
-        // Close button with improved styling
+        
         JButton closeButton = new JButton("Close");
         closeButton.setFont(new Font("Arial", Font.BOLD, 14));
         closeButton.setBackground(new Color(100, 100, 100));
@@ -161,7 +161,7 @@ public class ShopView extends JDialog {
     
     private void addShopItem(JPanel panel, String name, String description, int cost, 
                             ActionListener purchaseAction, JLabel statusLabel) {
-        // Create a styled panel for each item
+        
         JPanel itemPanel = new JPanel();
         itemPanel.setLayout(new BorderLayout(15, 0));
         itemPanel.setBorder(BorderFactory.createCompoundBorder(
@@ -170,12 +170,12 @@ public class ShopView extends JDialog {
         ));
         itemPanel.setBackground(new Color(45, 50, 60));
         
-        // Create an icon panel (you can replace with actual icons if available)
+        
         JPanel iconPanel = new JPanel();
         iconPanel.setPreferredSize(new Dimension(50, 50));
         iconPanel.setBackground(new Color(25, 118, 210));
         
-        // Display the first letter of the power-up as an icon
+        
         JLabel iconLabel = new JLabel(name.substring(name.lastIndexOf(' ') + 1, name.lastIndexOf(' ') + 2));
         iconLabel.setForeground(Color.WHITE);
         iconLabel.setFont(new Font("Arial", Font.BOLD, 20));
@@ -184,7 +184,7 @@ public class ShopView extends JDialog {
         
         itemPanel.add(iconPanel, BorderLayout.WEST);
         
-        // Information panel
+        
         JPanel infoPanel = new JPanel();
         infoPanel.setLayout(new BoxLayout(infoPanel, BoxLayout.Y_AXIS));
         infoPanel.setBackground(new Color(45, 50, 60));
@@ -210,7 +210,7 @@ public class ShopView extends JDialog {
         infoPanel.add(Box.createRigidArea(new Dimension(0, 5)));
         infoPanel.add(costLabel);
         
-        // Add status label if provided
+        
         if (statusLabel != null) {
             statusLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
             infoPanel.add(Box.createRigidArea(new Dimension(0, 5)));
@@ -219,17 +219,17 @@ public class ShopView extends JDialog {
         
         itemPanel.add(infoPanel, BorderLayout.CENTER);
         
-        // Buy button with improved styling
+        
         JButton buyButton = new JButton("Buy");
         buyButton.setFont(new Font("Arial", Font.BOLD, 14));
         buyButton.setBackground(new Color(50, 150, 50));
         buyButton.setForeground(Color.WHITE);
         buyButton.setFocusPainted(false);
         
-        // Add tooltip
+        
         buyButton.setToolTipText("Click to purchase this power-up");
         
-        // Add purchase action
+        
         buyButton.addActionListener(e -> {
             if (game.getCoins() >= cost) {
                 purchaseAction.actionPerformed(e);
@@ -258,9 +258,9 @@ public class ShopView extends JDialog {
             game.disableImpact(Constants.O_ATAR_DURATION);
             controller.SoundManager.getInstance().playSound("powerup");
             
-            // Update status
+            
             isOAtarActive = true;
-            oAtarSecondsLeft = Constants.O_ATAR_DURATION / 60; // Convert frames to seconds
+            oAtarSecondsLeft = Constants.O_ATAR_DURATION / 60; 
             oAtarActiveLabel.setText("Active: " + oAtarSecondsLeft + "s");
             oAtarActiveLabel.setForeground(new Color(0, 255, 0));
         }
@@ -271,9 +271,9 @@ public class ShopView extends JDialog {
             game.disableCollisions(Constants.O_AIRYAMAN_DURATION);
             controller.SoundManager.getInstance().playSound("powerup");
             
-            // Update status
+            
             isOAiryamanActive = true;
-            oAiryamanSecondsLeft = Constants.O_AIRYAMAN_DURATION / 60; // Convert frames to seconds
+            oAiryamanSecondsLeft = Constants.O_AIRYAMAN_DURATION / 60; 
             oAiryamanActiveLabel.setText("Active: " + oAiryamanSecondsLeft + "s");
             oAiryamanActiveLabel.setForeground(new Color(0, 255, 0));
         }

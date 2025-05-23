@@ -83,11 +83,11 @@ public abstract class NetworkSystem {
     }
     
     public void receivePacket(Packet packet) {
-        // Default implementation is to store the packet
+        
         if (canStorePacket()) {
             storePacket(packet);
             
-            // Mark system as active when it receives a packet
+            
             setActive(true);
         }
     }

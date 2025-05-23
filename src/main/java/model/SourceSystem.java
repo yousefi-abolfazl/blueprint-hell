@@ -9,10 +9,10 @@ public class SourceSystem extends NetworkSystem {
     private int packetCounter;
     private boolean isSquarePacketGenerator;
     private Random random;
-    private int localPacketsGenerated = 0; // تعداد پکت‌های تولید شده توسط این سیستم
+    private int localPacketsGenerated = 0; 
     
     public SourceSystem(Point position, int width, int height, int packetGenerationFrequency, boolean isSquarePacketGenerator) {
-        super(position, width, height, 0); // Source systems don't store packets
+        super(position, width, height, 0); 
         this.packetGenerationFrequency = packetGenerationFrequency;
         this.packetCounter = 0;
         this.isSquarePacketGenerator = isSquarePacketGenerator;
@@ -22,22 +22,22 @@ public class SourceSystem extends NetworkSystem {
     
     @Override
     public void render(Graphics2D g) {
-        // Draw system body
+        
         g.setColor(Constants.SOURCE_SYSTEM_COLOR);
         g.fillRect(position.x, position.y, width, height);
         
-        // Draw system outline
+        
         g.setColor(Color.BLACK);
         g.drawRect(position.x, position.y, width, height);
         
-        // Draw source indicator
+        
         g.setColor(Color.YELLOW);
         int indicatorSize = 15;
         g.fillOval(position.x + width/2 - indicatorSize/2, 
                   position.y - indicatorSize - 5, 
                   indicatorSize, indicatorSize);
         
-        // Draw packet type indicator
+        
         g.setColor(isSquarePacketGenerator ? Constants.PACKET_SQUARE_COLOR : Constants.PACKET_TRIANGLE_COLOR);
         if (isSquarePacketGenerator) {
             g.fillRect(position.x + width/2 - 10, position.y + height/2 - 10, 20, 20);
@@ -47,7 +47,7 @@ public class SourceSystem extends NetworkSystem {
             g.fillPolygon(xPoints, yPoints, 3);
         }
         
-        // Render all ports
+        
         for (Port port : outputPorts) {
             port.render(g);
         }
@@ -59,7 +59,7 @@ public class SourceSystem extends NetworkSystem {
         
         packetCounter++;
         
-        // Check if it's time to generate a new packet
+        
         if (packetCounter >= packetGenerationFrequency) {
             generatePacket();
             packetCounter = 0;
@@ -67,7 +67,7 @@ public class SourceSystem extends NetworkSystem {
     }
     
     private void generatePacket() {
-        // Always ensure we're active when generating packets
+        
         setActive(true);
         
         if (outputPorts.isEmpty()) {
@@ -75,14 +75,14 @@ public class SourceSystem extends NetworkSystem {
             return;
         }
         
-        // Choose a random output port
+        
         Port outputPort = outputPorts.get(random.nextInt(outputPorts.size()));
         Point packetPosition = new Point(outputPort.getPosition());
         
         System.out.println("\n== GENERATING NEW PACKET ==");
         System.out.println("Position: " + packetPosition.x + "," + packetPosition.y);
         
-        // Create the appropriate packet type
+        
         Packet newPacket;
         if (isSquarePacketGenerator) {
             newPacket = new SquarePacket(packetPosition);
@@ -92,14 +92,14 @@ public class SourceSystem extends NetworkSystem {
             System.out.println("Created a triangle packet with size " + newPacket.getSize());
         }
         
-        // Set source port on the packet
+        
         newPacket.setSourcePort(outputPort);
         
-        // Increment packet counters
+        
         localPacketsGenerated++;
         Game.getInstance().incrementTotalPacketsGenerated();
         
-        // Find connected wire and send packet through it
+        
         boolean packetSent = false;
         for (Wire wire : Game.getInstance().getWires()) {
             if (wire.getSourcePort() == outputPort) {
@@ -112,10 +112,10 @@ public class SourceSystem extends NetworkSystem {
         
         if (!packetSent) {
             System.err.println("WARNING: No wire connected to output port - packet not sent");
-            // If a packet is created but cannot be sent, don't count it as generated
+            
             Game.getInstance().decrementTotalPacketsGenerated();
         } else {
-            // Log detailed packet stats only if packet was actually sent
+            
             Game.getInstance().forceUpdatePacketLoss();
         }
         
@@ -123,13 +123,13 @@ public class SourceSystem extends NetworkSystem {
     }
     
     public void randomizePacketCounter() {
-        // Set counter to a random value between 0 and frequency to stagger packet generation
+        
         this.packetCounter = random.nextInt(packetGenerationFrequency);
         System.out.println("Randomized packet counter to " + packetCounter + " (frequency: " + packetGenerationFrequency + ")");
     }
     
     public void forceGeneratePacket() {
-        // فراخوانی مستقیم متد generatePacket بدون در نظر گرفتن packet counter
+        
         System.out.println("Forcing packet generation from source system");
         generatePacket();
     }

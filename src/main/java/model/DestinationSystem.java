@@ -7,32 +7,32 @@ public class DestinationSystem extends NetworkSystem {
     private int packetsReceived;
     
     public DestinationSystem(Point position, int width, int height) {
-        super(position, width, height, 0); // Destination systems don't need to store packets
+        super(position, width, height, 0); 
         this.packetsReceived = 0;
     }
     
     @Override
     public void render(Graphics2D g) {
-        // Draw system body
+        
         g.setColor(Constants.DESTINATION_SYSTEM_COLOR);
         g.fillRect(position.x, position.y, width, height);
         
-        // Draw system outline
+        
         g.setColor(Color.BLACK);
         g.drawRect(position.x, position.y, width, height);
         
-        // Draw destination indicator
+        
         g.setColor(Color.GREEN);
         int indicatorSize = 15;
         g.fillOval(position.x + width/2 - indicatorSize/2, 
                   position.y - indicatorSize - 5, 
                   indicatorSize, indicatorSize);
         
-        // Draw received packets count
+        
         g.setColor(Color.WHITE);
         g.drawString("Received: " + packetsReceived, position.x + 10, position.y + height/2);
         
-        // Render all ports
+        
         for (Port port : inputPorts) {
             port.render(g);
         }
@@ -40,8 +40,8 @@ public class DestinationSystem extends NetworkSystem {
     
     @Override
     public void update() {
-        // Destination systems receive packets but don't process them further
-        // They just count the received packets
+        
+        
     }
     
     @Override
@@ -49,16 +49,16 @@ public class DestinationSystem extends NetworkSystem {
         packetsReceived++;
         System.out.println("Destination system received packet #" + packetsReceived);
         
-        // Record successful packet delivery in the Game
+        
         Game.getInstance().incrementPacketsDelivered();
         
-        // Add coins for the received packet
+        
         Game.getInstance().addCoins(packet.getCoinValue());
         
-        // Set the system as active when receiving packets
+        
         setActive(true);
         
-        // Play a sound when a packet is received
+        
         controller.SoundManager.getInstance().playSound("connection");
     }
     

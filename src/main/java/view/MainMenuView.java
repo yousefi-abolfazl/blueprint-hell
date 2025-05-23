@@ -128,7 +128,7 @@ public class MainMenuView extends JPanel{
         add(gameStagesButton);
         add(helpButton);
 
-        // Add button actions
+        
         startGameButton.addActionListener(e -> {
             SceneController.getInstance().startGame();
         });
@@ -138,12 +138,12 @@ public class MainMenuView extends JPanel{
         });
         
         settingsButton.addActionListener(e -> {
-            // Show settings dialog
+            
             showSettingsDialog();
         });
         
         gameStagesButton.addActionListener(e -> {
-            // Show level selection dialog
+            
             showLevelSelectionDialog();
         });
         
@@ -161,7 +161,7 @@ public class MainMenuView extends JPanel{
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
         panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
         
-        // Volume slider
+        
         JLabel volumeLabel = new JLabel("Volume");
         int currentVolume = (int)(controller.SoundManager.getInstance().getVolume() * 100);
         JSlider volumeSlider = new JSlider(0, 100, currentVolume);
@@ -169,22 +169,22 @@ public class MainMenuView extends JPanel{
         volumeSlider.setPaintTicks(true);
         volumeSlider.setPaintLabels(true);
         
-        // Mute checkbox
+        
         JCheckBox muteCheckbox = new JCheckBox("Mute Sound");
         muteCheckbox.setSelected(controller.SoundManager.getInstance().isMuted());
         
-        // Update sound manager when slider changes
+        
         volumeSlider.addChangeListener(e -> {
             float volume = volumeSlider.getValue() / 100.0f;
             controller.SoundManager.getInstance().setVolume(volume);
         });
         
-        // Update sound manager when checkbox changes
+        
         muteCheckbox.addActionListener(e -> {
             controller.SoundManager.getInstance().setMuted(muteCheckbox.isSelected());
         });
         
-        // Add components to panel
+        
         panel.add(Box.createVerticalGlue());
         
         JPanel volumePanel = new JPanel();
@@ -197,12 +197,12 @@ public class MainMenuView extends JPanel{
         panel.add(volumePanel);
         panel.add(Box.createVerticalGlue());
         
-        // Key bindings panel (placeholder for extra functionality)
+        
         JPanel keyBindingsPanel = new JPanel();
         keyBindingsPanel.setLayout(new BoxLayout(keyBindingsPanel, BoxLayout.Y_AXIS));
         JButton keyBindingsButton = new JButton("Configure Key Bindings");
         keyBindingsButton.addActionListener(e -> {
-            // Will be implemented in the bonus section
+            
             JOptionPane.showMessageDialog(settingsDialog, 
                 "Key binding configuration will be available in a future update.", 
                 "Coming Soon", JOptionPane.INFORMATION_MESSAGE);
@@ -212,7 +212,7 @@ public class MainMenuView extends JPanel{
         panel.add(keyBindingsPanel);
         panel.add(Box.createVerticalGlue());
         
-        // Close button
+        
         JButton closeButton = new JButton("Close");
         closeButton.addActionListener(e -> settingsDialog.dispose());
         
@@ -310,9 +310,9 @@ public class MainMenuView extends JPanel{
     }
 
     class CustomButton extends JButton {
-        private Color hoverBackground = new Color(70, 130, 180, 255); // Blue steel
-        private Color normalBackground = new Color(41, 95, 140, 255); // Dark blue
-        private Color textColor = new Color(240, 240, 240); // light white
+        private Color hoverBackground = new Color(70, 130, 180, 255); 
+        private Color normalBackground = new Color(41, 95, 140, 255); 
+        private Color textColor = new Color(240, 240, 240); 
         private boolean isHovered = false;
         private final int cornerRadius = 25;
         

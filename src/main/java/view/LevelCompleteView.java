@@ -25,31 +25,31 @@ public class LevelCompleteView extends JDialog {
         mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
         mainPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
         
-        // Success Label
+        
         JLabel successLabel = new JLabel("LEVEL COMPLETE!");
         successLabel.setFont(new Font("Arial", Font.BOLD, 24));
         successLabel.setForeground(new Color(0, 150, 0));
         successLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
         
-        // Stats
+        
         JLabel packetLossLabel = new JLabel("Packet Loss: " + game.getPacketLoss() + "%");
         packetLossLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
         
         JLabel coinsLabel = new JLabel("Coins Collected: " + game.getCoins());
         coinsLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
         
-        // Level
+        
         JLabel levelLabel = new JLabel("Level " + game.getCurrentLevel() + " Completed!");
         levelLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
         
-        // Buttons
+        
         JButton nextLevelButton = new JButton("Next Level");
         nextLevelButton.setAlignmentX(Component.CENTER_ALIGNMENT);
         nextLevelButton.addActionListener(e -> {
             dispose();
             int nextLevel = game.getCurrentLevel() + 1;
-            // Check if next level exists
-            if (nextLevel <= 2) { // Currently only 2 levels
+            
+            if (nextLevel <= 2) { 
                 SceneController.getInstance().startLevel(nextLevel);
             } else {
                 JOptionPane.showMessageDialog(
@@ -76,7 +76,7 @@ public class LevelCompleteView extends JDialog {
             SceneController.getInstance().showMainMenu();
         });
         
-        // Add components to panel
+        
         mainPanel.add(successLabel);
         mainPanel.add(Box.createRigidArea(new Dimension(0, 20)));
         mainPanel.add(levelLabel);

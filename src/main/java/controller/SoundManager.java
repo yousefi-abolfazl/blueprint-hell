@@ -18,7 +18,7 @@ public class SoundManager {
     
     private SoundManager() {
         soundClips = new HashMap<>();
-        volume = 0.5f; // Default volume at 50%
+        volume = 0.5f;
         muted = false;
         
         loadSounds();
@@ -26,14 +26,12 @@ public class SoundManager {
     
     private void loadSounds() {
         try {
-            // Check if sounds directory exists
             File soundsDir = new File("src/main/resources/sounds");
             if (!soundsDir.exists() || !soundsDir.isDirectory()) {
                 System.out.println("Sounds directory not found. Running in silent mode.");
                 return;
             }
             
-            // Load all sound effects
             tryLoadSound("connection", Constants.SOUND_CONNECTION);
             tryLoadSound("packet_lost", Constants.SOUND_PACKET_LOST);
             tryLoadSound("level_complete", Constants.SOUND_LEVEL_COMPLETE);
@@ -43,7 +41,6 @@ public class SoundManager {
             tryLoadSound("game_pause", Constants.SOUND_GAME_PAUSE);
             tryLoadSound("powerup", Constants.SOUND_POWERUP);
             
-            // Try to load background music
             tryLoadBackgroundMusic();
             
         } catch (Exception e) {
@@ -59,7 +56,6 @@ public class SoundManager {
                 Clip clip = AudioSystem.getClip();
                 clip.open(ais);
                 
-                // Set initial volume
                 setClipVolume(clip, volume);
                 
                 soundClips.put(name, clip);
@@ -79,10 +75,8 @@ public class SoundManager {
                 backgroundMusic = AudioSystem.getClip();
                 backgroundMusic.open(ais);
                 
-                // Set background music to loop continuously
                 backgroundMusic.loop(Clip.LOOP_CONTINUOUSLY);
                 
-                // Set initial volume
                 setClipVolume(backgroundMusic, volume);
             } else {
                 System.out.println("Background music file not found or empty: " + Constants.SOUND_BACKGROUND);
@@ -138,12 +132,10 @@ public class SoundManager {
     public void setVolume(float volume) {
         this.volume = Math.max(0.0f, Math.min(1.0f, volume));
         
-        // Update volume for all clips
         for (Clip clip : soundClips.values()) {
             setClipVolume(clip, this.volume);
         }
         
-        // Update volume for background music
         if (backgroundMusic != null) {
             setClipVolume(backgroundMusic, this.volume);
         }
@@ -167,7 +159,6 @@ public class SoundManager {
         return muted;
     }
     
-    // Power-up timer methods
     public void scheduleOAtarDeactivation(Runnable onComplete) {
         System.out.println("Scheduling O'Atar deactivation for " + Constants.O_ATAR_DURATION + " frames (10 seconds)");
         Timer timer = new Timer();
@@ -178,7 +169,7 @@ public class SoundManager {
                 onComplete.run();
                 timer.cancel();
             }
-        }, Constants.O_ATAR_DURATION * 1000 / 60); // Convert frames to milliseconds (assuming 60 FPS)
+        }, Constants.O_ATAR_DURATION * 1000 / 60);
     }
     
     public void scheduleOAiryamanDeactivation(Runnable onComplete) {
@@ -191,6 +182,6 @@ public class SoundManager {
                 onComplete.run();
                 timer.cancel();
             }
-        }, Constants.O_AIRYAMAN_DURATION * 1000 / 60); // Convert frames to milliseconds
+        }, Constants.O_AIRYAMAN_DURATION * 1000 / 60);
     }
 } 

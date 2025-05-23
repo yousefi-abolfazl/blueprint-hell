@@ -73,7 +73,7 @@ public class Game {
             return;
         }
         
-        // Log current packet status before update
+        
         System.out.println("\n===== GAME STATUS UPDATE =====");
         System.out.println("Total packets generated: " + totalPacketsGenerated);
         System.out.println("Total packets delivered: " + totalPacketsDelivered);
@@ -81,27 +81,27 @@ public class Game {
         System.out.println("Current packet loss: " + packetLoss + "%");
         System.out.println("============================\n");
         
-        // Update all systems
+        
         for (NetworkSystem system : systems) {
             system.update();
         }
         
-        // Count packets currently on wires for debugging
+        
         int packetsInTransit = 0;
         for (Wire wire : wires) {
             packetsInTransit += wire.getPacketsOnWire().size();
         }
         System.out.println("Packets currently in transit: " + packetsInTransit);
         
-        // Update all wires
+        
         for (Wire wire : wires) {
             wire.update();
         }
         
-        // Handle packet interactions and check for collisions
+        
         checkPacketCollisions();
         
-        // نمایش اطلاعات جاری packet loss هر 30 فریم (حدود 0.5 ثانیه)
+        
         if (temporalProgress % 30 == 0) {
             System.out.println("Current stats - Total packets: " + totalPacketsGenerated + 
                              ", Delivered: " + totalPacketsDelivered +
@@ -109,7 +109,7 @@ public class Game {
                              ", Loss percentage: " + packetLoss + "%");
         }
         
-        // Check game over condition
+        
         if (packetLoss > Constants.PACKET_LOSS_THRESHOLD) {
             isGameOver = true;
             SoundManager.getInstance().playSound("game_over");
@@ -117,10 +117,10 @@ public class Game {
                              Constants.PACKET_LOSS_THRESHOLD + "%");
         }
         
-        // Check level completion
+        
         checkLevelCompletion();
         
-        // افزایش شمارنده زمان
+        
         temporalProgress++;
     }
     
@@ -136,9 +136,9 @@ public class Game {
         }
         
         if (totalPacketsReceived >= requiredPackets && !isGameOver) {
-            // Level completed!
+            
             SoundManager.getInstance().playSound("level_complete");
-            // Let the SceneController handle level completion via its isLevelComplete method
+            
         }
     }
     
@@ -147,11 +147,11 @@ public class Game {
             return;
         }
         
-        // For all wires, check if packets on them collide
+        
         for (Wire wire : wires) {
             List<Packet> packets = wire.getPacketsOnWire();
             
-            // Check collisions between packets on the same wire
+            
             for (int i = 0; i < packets.size(); i++) {
                 Packet packet1 = packets.get(i);
                 
@@ -167,44 +167,44 @@ public class Game {
     }
     
     private boolean packetsCollide(Packet packet1, Packet packet2) {
-        // Simple collision detection based on distance
+        
         Point pos1 = packet1.getPosition();
         Point pos2 = packet2.getPosition();
         
-        // Check if both packets are on the same wire and moving in the same direction
+        
         if (arePacketsOnSameWire(packet1, packet2)) {
-            // For packets on the same wire moving in the same direction, use a reduced collision threshold
-            // to make it less likely that they collide
+            
+            
             Port source1 = packet1.getSourcePort();
             Port source2 = packet2.getSourcePort();
             
-            // If they're from the same source port (same wire), be more forgiving
+            
             if (source1 == source2) {
-                // Calculate direction vectors to see if they're moving in the same direction
+                
                 Wire wire = findWireContainingPacket(packet1);
                 if (wire != null) {
                     Point wireEnd = wire.getDestinationPort().getPosition();
                     
-                    // Calculate direction from packet1 to wire end
+                    
                     double dx1 = wireEnd.x - pos1.x;
                     double dy1 = wireEnd.y - pos1.y;
                     
-                    // Calculate direction from packet2 to wire end
+                    
                     double dx2 = wireEnd.x - pos2.x;
                     double dy2 = wireEnd.y - pos2.y;
                     
-                    // Calculate dot product to check if moving in same direction (positive dot product)
+                    
                     double dotProduct = dx1 * dx2 + dy1 * dy2;
                     
                     if (dotProduct > 0) {
-                        // They're moving in roughly the same direction, so be more forgiving
-                        // Calculate distance between them
+                        
+                        
                         double distance = Math.sqrt(
                             Math.pow(pos2.x - pos1.x, 2) + 
                             Math.pow(pos2.y - pos1.y, 2)
                         );
                         
-                        // Use a much smaller collision threshold for packets moving the same direction
+                        
                         int reducedCollisionThreshold = (packet1.getSize() + packet2.getSize()) / 2;
                         System.out.println("Same direction packets: Distance=" + distance + 
                                           ", Threshold=" + reducedCollisionThreshold);
@@ -214,7 +214,7 @@ public class Game {
             }
         }
         
-        // Standard collision detection for packets not on same wire or moving in different directions
+        
         int collisionThreshold = packet1.getSize() + packet2.getSize();
         double distance = Math.sqrt(
             Math.pow(pos2.x - pos1.x, 2) + 
@@ -256,28 +256,28 @@ public class Game {
                               " size=" + packet2.getSize() + " noise=" + packet2.getNoise());
         }
         
-        // Play collision sound
+        
         SoundManager.getInstance().playSound("collision");
         
-        // Generate impact effect
+        
         Point collisionPoint = new Point(
             (packet1.getPosition().x + packet2.getPosition().x) / 2,
             (packet1.getPosition().y + packet2.getPosition().y) / 2
         );
         
-        // Add noise carefully - ensure we don't immediately lose packets if they're at size-1 noise
+        
         if (packet1.getNoise() + Constants.IMPACT_NOISE_AMOUNT >= packet1.getSize() &&
             packet2.getNoise() + Constants.IMPACT_NOISE_AMOUNT >= packet2.getSize()) {
-            // Both packets would be lost - add less noise to one of them randomly
+            
             if (Math.random() < 0.5) {
-                // Add full noise to packet1, reduced noise to packet2
+                
                 packet1.addNoise(Constants.IMPACT_NOISE_AMOUNT);
                 packet2.addNoise(Math.max(0, packet2.getSize() - packet2.getNoise() - 1));
                 if (Constants.DEBUG_COLLISIONS) {
                     System.out.println("Reduced noise for packet 2 to prevent simultaneous loss");
                 }
             } else {
-                // Add full noise to packet2, reduced noise to packet1
+                
                 packet2.addNoise(Constants.IMPACT_NOISE_AMOUNT);
                 packet1.addNoise(Math.max(0, packet1.getSize() - packet1.getNoise() - 1));
                 if (Constants.DEBUG_COLLISIONS) {
@@ -285,7 +285,7 @@ public class Game {
                 }
             }
         } else {
-            // Regular noise addition
+            
             packet1.addNoise(Constants.IMPACT_NOISE_AMOUNT);
             packet2.addNoise(Constants.IMPACT_NOISE_AMOUNT);
             if (Constants.DEBUG_COLLISIONS) {
@@ -298,14 +298,14 @@ public class Game {
             System.out.println("After collision - Packet 2: noise=" + packet2.getNoise());
         }
         
-        // Check if packets are lost due to noise
+        
         checkPacketLoss(packet1);
         checkPacketLoss(packet2);
         
-        // Apply impact to nearby packets
+        
         applyImpactToNearbyPackets(collisionPoint, Constants.IMPACT_RADIUS);
         
-        // Force recalculation of packet loss
+        
         forceUpdatePacketLoss();
         
         if (Constants.DEBUG_COLLISIONS) {
@@ -315,23 +315,23 @@ public class Game {
     
     public void checkPacketLoss(Packet packet) {
         if (packet.isLost()) {
-            // Play packet lost sound
+            
             SoundManager.getInstance().playSound("packet_lost");
             
-            // Remove packet from its wire
+            
             for (Wire wire : wires) {
                 if (wire.getPacketsOnWire().contains(packet)) {
                     wire.removePacket(packet);
                     totalPacketsLost++;
                     
-                    // Log detailed packet loss information
+                    
                     System.out.println("===== PACKET LOST =====");
                     System.out.println("Packet lost due to noise: " + packet.getNoise() + " >= " + packet.getSize());
                     System.out.println("Total generated: " + totalPacketsGenerated);
                     System.out.println("Total lost: " + totalPacketsLost);
                     System.out.println("Total delivered: " + totalPacketsDelivered);
                     
-                    // Explicitly recalculate packet loss percentage on every loss
+                    
                     updatePacketLossPercentage();
                     
                     System.out.println("=====================");
@@ -342,35 +342,35 @@ public class Game {
     }
     
     private void applyImpactToNearbyPackets(Point impactPoint, int radius) {
-        // For each wire
+        
         for (Wire wire : wires) {
-            // For each packet on the wire
+            
             for (Packet packet : new ArrayList<>(wire.getPacketsOnWire())) {
                 Point packetPos = packet.getPosition();
                 
-                // Calculate distance from impact
+                
                 double distance = Math.sqrt(
                     Math.pow(packetPos.x - impactPoint.x, 2) +
                     Math.pow(packetPos.y - impactPoint.y, 2)
                 );
                 
-                // If within impact radius, apply force based on distance
+                
                 if (distance < radius) {
-                    // Calculate force magnitude (stronger when closer)
+                    
                     double forceMagnitude = 1.0 - (distance / radius);
                     
-                    // Calculate direction away from impact
+                    
                     double dx = packetPos.x - impactPoint.x;
                     double dy = packetPos.y - impactPoint.y;
                     
-                    // Normalize direction
+                    
                     double length = Math.sqrt(dx * dx + dy * dy);
                     if (length > 0) {
                         dx /= length;
                         dy /= length;
                     }
                     
-                    // Apply force (move packet)
+                    
                     int moveX = (int) (dx * forceMagnitude * Constants.IMPACT_FORCE_MULTIPLIER);
                     int moveY = (int) (dy * forceMagnitude * Constants.IMPACT_FORCE_MULTIPLIER);
                     
@@ -379,7 +379,7 @@ public class Game {
                         packetPos.y + moveY
                     ));
                     
-                    // Check if packet was pushed off the wire
+                    
                     if (!wire.isPointNearWire(packet.getPosition(), Constants.WIRE_PROXIMITY_THRESHOLD)) {
                         wire.removePacket(packet);
                         totalPacketsLost++;
@@ -398,10 +398,10 @@ public class Game {
         temporalProgress++;
         System.out.println("Time advanced to: " + temporalProgress);
         
-        // اجرای یک سیکل به‌روزرسانی برای همه سیستم‌ها
+        
         for (NetworkSystem system : systems) {
             if (system instanceof SourceSystem) {
-                // دستور به سیستم منبع برای تولید یک پکت
+                
                 SourceSystem sourceSystem = (SourceSystem) system;
                 sourceSystem.setActive(true);
                 sourceSystem.forceGeneratePacket();
@@ -414,10 +414,10 @@ public class Game {
             temporalProgress--;
             System.out.println("Time rewinded to: " + temporalProgress);
             
-            // کاهش اثرات noise در همه پکت‌ها
+            
             for (Wire wire : wires) {
                 for (Packet packet : wire.getPacketsOnWire()) {
-                    // کاهش noise به میزان 1 واحد
+                    
                     int currentNoise = packet.getNoise();
                     if (currentNoise > 0) {
                         packet.resetNoise();
@@ -428,12 +428,12 @@ public class Game {
         }
     }
     
-    // Power-ups
+    
     public void disableImpact(int duration) {
         impactEffectActive = false;
         SoundManager.getInstance().playSound("powerup");
         
-        // Schedule re-enabling of impact after duration
+        
         SoundManager.getInstance().scheduleOAtarDeactivation(() -> {
             impactEffectActive = true;
         });
@@ -443,7 +443,7 @@ public class Game {
         collisionDisabled = true;
         SoundManager.getInstance().playSound("powerup");
         
-        // Schedule re-enabling of collisions after duration
+        
         SoundManager.getInstance().scheduleOAiryamanDeactivation(() -> {
             collisionDisabled = false;
         });
@@ -471,7 +471,7 @@ public class Game {
         return false;
     }
     
-    // Getters and setters
+    
     public List<NetworkSystem> getSystems() {
         return systems;
     }
@@ -563,14 +563,14 @@ public class Game {
     private void updatePacketLossPercentage() {
         int oldPacketLoss = packetLoss;
         
-        // We should only consider packets that have either been lost or successfully delivered
+        
         int processedPackets = totalPacketsLost + totalPacketsDelivered;
         
         if (processedPackets > 0) {
-            // Calculate packet loss as a percentage of processed packets, not generated packets
+            
             packetLoss = (totalPacketsLost * 100) / processedPackets;
             
-            // Debug output to understand the calculation
+            
             System.out.println("PACKET LOSS CALCULATION: Lost=" + totalPacketsLost + 
                               ", Delivered=" + totalPacketsDelivered + 
                               ", Total processed=" + processedPackets +
@@ -578,7 +578,7 @@ public class Game {
                               ", Old percentage=" + oldPacketLoss +
                               ", New percentage=" + packetLoss);
                               
-            // Check if we just crossed the game over threshold
+            
             if (packetLoss >= Constants.PACKET_LOSS_THRESHOLD && oldPacketLoss < Constants.PACKET_LOSS_THRESHOLD) {
                 System.out.println("WARNING: Packet loss has reached " + packetLoss + "%, which exceeds threshold of " + 
                                   Constants.PACKET_LOSS_THRESHOLD + "%");
@@ -588,18 +588,18 @@ public class Game {
         }
     }
     
-    // Add method to track successful packet delivery
+    
     public void incrementPacketsDelivered() {
         totalPacketsDelivered++;
         updatePacketLossPercentage();
         System.out.println("Packet successfully delivered! Total delivered: " + totalPacketsDelivered);
     }
     
-    // Run this method to explicitly force a recalculation of packet loss percentage
+    
     public void forceUpdatePacketLoss() {
         updatePacketLossPercentage();
         
-        // Print detailed diagnostic information
+        
         System.out.println("\n====== PACKET LOSS DIAGNOSTICS ======");
         System.out.println("Total packets generated: " + totalPacketsGenerated);
         System.out.println("Total packets delivered: " + totalPacketsDelivered);
@@ -610,7 +610,7 @@ public class Game {
         System.out.println("====================================\n");
     }
     
-    // Add method to track lost packets
+    
     public void incrementPacketsLost() {
         totalPacketsLost++;
         updatePacketLossPercentage();

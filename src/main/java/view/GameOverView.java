@@ -25,23 +25,23 @@ public class GameOverView extends JDialog {
         mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
         mainPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
         
-        // Game Over Label
+        
         JLabel gameOverLabel = new JLabel("GAME OVER");
         gameOverLabel.setFont(new Font("Arial", Font.BOLD, 24));
         gameOverLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
         
-        // Stats
+        
         JLabel packetLossLabel = new JLabel("Packet Loss: " + game.getPacketLoss() + "%");
         packetLossLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
         
         JLabel coinsLabel = new JLabel("Coins Collected: " + game.getCoins());
         coinsLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
         
-        // Game Level
+        
         JLabel levelLabel = new JLabel("Level: " + game.getCurrentLevel());
         levelLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
         
-        // Buttons
+        
         JButton retryButton = new JButton("Retry Level");
         retryButton.setAlignmentX(Component.CENTER_ALIGNMENT);
         retryButton.addActionListener(e -> {
@@ -56,7 +56,7 @@ public class GameOverView extends JDialog {
             SceneController.getInstance().showMainMenu();
         });
         
-        // Add components to panel
+        
         mainPanel.add(gameOverLabel);
         mainPanel.add(Box.createRigidArea(new Dimension(0, 20)));
         mainPanel.add(packetLossLabel);
