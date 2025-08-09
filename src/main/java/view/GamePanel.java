@@ -17,11 +17,7 @@ public class GamePanel extends JPanel {
     private Point wireEndPoint;
     private boolean isWiring = false;
     private boolean isGameRunning = false;
-    
-    private List<NetworkSystem> systems;
-    private List<Wire> wires;
-    
-    
+
     private JLabel wireLabel;
     private JLabel temporalLabel;
     private JLabel packetLossLabel;
@@ -39,8 +35,6 @@ public class GamePanel extends JPanel {
         setBackground(new Color(15, 16, 22, 255));
         
         game = Game.getInstance();
-        systems = new ArrayList<>();
-        wires = new ArrayList<>();
         
         initializeHUD();
         initializeControls();
@@ -257,7 +251,6 @@ public class GamePanel extends JPanel {
                     
                     if (wireLength <= game.getRemainingWireLength()) {
                         game.addWire(newWire);
-                        wires.add(newWire);
                         updateHUD();
                         SoundManager.getInstance().playSound("connection");
                         System.out.println("Wire connected successfully! Length: " + wireLength);
@@ -373,7 +366,7 @@ public class GamePanel extends JPanel {
     }
     
     private Port findPortAt(Point point) {
-        for (NetworkSystem system : systems) {
+        for (NetworkSystem system : game.getSystems()) {
             
             for (Port port : system.getInputPorts()) {
                 if (isPointNearPort(point, port)) {
@@ -402,9 +395,6 @@ public class GamePanel extends JPanel {
     }
     
     public void loadLevel(int level) {
-        
-        systems.clear();
-        wires.clear();
         game.resetGame();
         game.setCurrentLevel(level);
         
@@ -443,7 +433,6 @@ public class GamePanel extends JPanel {
         source1.addOutputPort(sourcePort1);
         
         
-        systems.add(source1);
         game.addSystem(source1);
         
         
@@ -469,7 +458,6 @@ public class GamePanel extends JPanel {
         system1.addOutputPort(system1OutputPort);
         
         
-        systems.add(system1);
         game.addSystem(system1);
         
         
@@ -488,7 +476,6 @@ public class GamePanel extends JPanel {
         dest1.addInputPort(destPort1);
         
         
-        systems.add(dest1);
         game.addSystem(dest1);
     }
     
@@ -532,8 +519,6 @@ public class GamePanel extends JPanel {
         triangleSource.addOutputPort(triangleSourcePort);
         
         
-        systems.add(squareSource);
-        systems.add(triangleSource);
         game.addSystem(squareSource);
         game.addSystem(triangleSource);
         
@@ -593,8 +578,6 @@ public class GamePanel extends JPanel {
         system2.addOutputPort(system2Output);
         
         
-        systems.add(system1);
-        systems.add(system2);
         game.addSystem(system1);
         game.addSystem(system2);
         
@@ -627,8 +610,6 @@ public class GamePanel extends JPanel {
         triangleDest.addInputPort(triangleDestInput);
         
         
-        systems.add(squareDest);
-        systems.add(triangleDest);
         game.addSystem(squareDest);
         game.addSystem(triangleDest);
     }
@@ -636,34 +617,29 @@ public class GamePanel extends JPanel {
     private void toggleGameRunning() {
         System.out.println("Toggle game running called. Current state: " + isGameRunning);
         isGameRunning = !isGameRunning;
-        
+
         if (isGameRunning) {
             System.out.println("Game started running");
-            
-            
-            for (NetworkSystem system : systems) {
+
+            // از game.getSystems() برای دسترسی به مدل استفاده کنید
+            for (NetworkSystem system : game.getSystems()) {
                 if (system instanceof SourceSystem) {
                     System.out.println("Activating source system");
                     system.setActive(true);
                     
-                    
                     SourceSystem sourceSystem = (SourceSystem) system;
-                    
                     sourceSystem.randomizePacketCounter();
                 }
             }
-            
+
             SoundManager.getInstance().playSound("game_start");
-            
-            
-            System.out.println("Triggering immediate update");
-            update();
+
         } else {
             System.out.println("Game paused");
             SoundManager.getInstance().playSound("game_pause");
         }
-        
-        
+
+        // این دو خط را از اینجا حذف نکنید، چون مستقیماً بر روی نما تأثیر دارند
         updateHUD();
         repaint();
     }
@@ -698,80 +674,6 @@ public class GamePanel extends JPanel {
             game.getTotalPacketsGenerated() - game.getTotalPacketsDelivered()));
         
         coinsLabel.setText("Coins: " + game.getCoins());
-    }
-    
-    public void update() {
-        if (isGameRunning && !game.isPaused()) {
-            System.out.println("Updating game state...");
-            
-            
-            displayStatus();
-            
-            
-            for (NetworkSystem system : systems) {
-                System.out.println("Updating system: " + system.getClass().getSimpleName());
-                if (system instanceof SourceSystem) {
-                    
-                    system.setActive(true);
-                    System.out.println("Ensuring source system is active");
-                }
-                system.update();
-            }
-            
-            
-            for (Wire wire : wires) {
-                int packetCount = wire.getPacketsOnWire().size();
-                System.out.println("Updating wire with " + packetCount + " packets");
-                wire.update();
-            }
-            
-            
-            game.update();
-            
-            if (game.isGameOver()) {
-                isGameRunning = false;
-                System.out.println("GAME OVER DETECTED! Packet Loss: " + game.getPacketLoss() + "%");
-                showGameOverDialog();
-            }
-            
-            updateHUD();
-            repaint();
-        }
-    }
-    
-    private void displayStatus() {
-        System.out.println("--- GAME STATUS ---");
-        
-        
-        System.out.println("Systems: " + systems.size());
-        for (NetworkSystem system : systems) {
-            System.out.println("  System: " + system.getClass().getSimpleName() + 
-                              ", Active: " + system.isActive() +
-                              ", InputPorts: " + system.getInputPorts().size() +
-                              ", OutputPorts: " + system.getOutputPorts().size());
-            
-            if (system instanceof DestinationSystem) {
-                System.out.println("    Packets received: " + ((DestinationSystem) system).getPacketsReceived());
-            }
-        }
-        
-        
-        System.out.println("Wires: " + wires.size());
-        for (Wire wire : wires) {
-            System.out.println("  Wire: Source=" + wire.getSourcePort().getClass().getSimpleName() + 
-                              ", Destination=" + wire.getDestinationPort().getClass().getSimpleName() +
-                              ", Packets=" + wire.getPacketsOnWire().size());
-        }
-        
-        
-        System.out.println("Packet statistics:");
-        System.out.println("  Generated: " + game.getTotalPacketsGenerated());
-        System.out.println("  Delivered: " + game.getTotalPacketsDelivered());
-        System.out.println("  Lost: " + game.getTotalPacketsLost());
-        System.out.println("  In transit: " + (game.getTotalPacketsGenerated() - game.getTotalPacketsDelivered() - game.getTotalPacketsLost()));
-        System.out.println("  Loss rate: " + game.getPacketLoss() + "%");
-        
-        System.out.println("------------------");
     }
     
     private void showGameOverDialog() {
@@ -811,12 +713,12 @@ public class GamePanel extends JPanel {
         }
         
         
-        for (Wire wire : wires) {
+        for (Wire wire : game.getWires()) {
             wire.render(g2d);
         }
         
         
-        for (NetworkSystem system : systems) {
+        for (NetworkSystem system : game.getSystems()) {
             system.render(g2d);
         }
         
@@ -849,7 +751,7 @@ public class GamePanel extends JPanel {
         }
         
         
-        if (!isWiring && !isGameRunning && systems.size() > 0) {
+        if (!isWiring && !isGameRunning && game.getSystems().size() > 0) {
             g2d.setColor(new Color(255, 255, 255, 180));
             g2d.setFont(new Font("Arial", Font.BOLD, 16));
             String instructions = "Connect output ports (RED) to input ports (GREEN) by clicking and dragging";
