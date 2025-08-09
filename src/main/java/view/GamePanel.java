@@ -125,45 +125,6 @@ public class GamePanel extends JPanel {
         });
         
         
-        Timer gameUpdateTimer = new Timer(16, e -> {
-            if (isGameRunning && !game.isPaused()) {
-                System.out.println("Game update timer tick at " + System.currentTimeMillis());
-                
-                
-                for (NetworkSystem system : systems) {
-                    if (system instanceof SourceSystem) {
-                        system.update();
-                    }
-                }
-                
-                
-                for (NetworkSystem system : systems) {
-                    if (!(system instanceof SourceSystem)) {
-                        system.update();
-                    }
-                }
-                
-                
-                for (Wire wire : wires) {
-                    wire.update();
-                    
-                    try {
-                        Thread.sleep(1); 
-                    } catch(InterruptedException ex) {
-                        Thread.currentThread().interrupt();
-                    }
-                }
-                
-                
-                game.update();
-                
-                
-                updateHUD();
-                repaint();
-            }
-        });
-        gameUpdateTimer.start();
-        
         
         SwingUtilities.invokeLater(this::forceFocus);
     }
@@ -896,6 +857,14 @@ public class GamePanel extends JPanel {
             int textWidth = fm.stringWidth(instructions);
             g2d.drawString(instructions, (width - textWidth) / 2, height - 100);
         }
+    }
+
+    public boolean isGameRunning() {
+        return isGameRunning;
+    }
+
+    public void setGameRunning(boolean isRunning) {
+        this.isGameRunning = isRunning;
     }
     
     public static GamePanel getInstance() {

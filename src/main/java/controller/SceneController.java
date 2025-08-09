@@ -37,19 +37,38 @@ public class SceneController {
     }
     
     private void updateGame() {
-        System.out.println("SceneController.updateGame() called at " + System.currentTimeMillis());
-        
-        GamePanel.getInstance().update();
-        
-        GamePanel.getInstance().updateHUD();
-        GamePanel.getInstance().repaint();
-        
-        if (Game.getInstance().isGameOver()) {
-            showGameOver();
-        }
-        
-        if (isLevelComplete()) {
-            showLevelComplete();
+        Game game = Game.getInstance();
+        GamePanel panel = GamePanel.getInstance();
+
+        // از GamePanel بپرسید که آیا بازی در حال اجراست؟
+        if (panel.isGameRunning() && !game.isPaused()) {
+         
+         // به‌روزرسانی تمام سیستم‌ها و سیم‌ها
+         // (این منطق قبلاً در تایمر GamePanel بود)
+            for (NetworkSystem system : game.getSystems()) {
+                system.update();
+            }
+            for (Wire wire : game.getWires()) {
+                wire.update();
+            }
+
+            // به‌روزرسانی وضعیت کلی بازی (برخوردها، GameOver)
+            game.update();
+         
+            // به‌روزرسانی نمایشگرهای اطلاعات (HUD)
+            panel.updateHUD();
+         
+            // درخواست بازрисовى از پنل بازی
+            panel.repaint();
+            
+            // بررسی وضعیت‌های پایانی بازی
+            if (game.isGameOver()) {
+                panel.setGameRunning(false); // متوقف کردن بازی
+                showGameOver();
+            } else if (isLevelComplete()) { // متد isLevelComplete را هم چک کنید
+                panel.setGameRunning(false); // متوقف کردن بازی
+                showLevelComplete();
+            }
         }
     }
     
