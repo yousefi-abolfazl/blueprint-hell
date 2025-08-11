@@ -5,7 +5,6 @@ import controller.SoundManager;
 
 import java.awt.*;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 public class Game {
@@ -59,6 +58,14 @@ public class Game {
         if (wireLength <= remainingWireLength) {
             wires.add(wire);
             remainingWireLength -= wireLength;
+            // این خط را اضافه کنید
+            System.out.printf("SUCCESS: Wire added. From (%d,%d) to (%d,%d). Remaining length: %d%n",
+                wire.getSourcePort().getPosition().x, wire.getSourcePort().getPosition().y,
+                wire.getDestinationPort().getPosition().x, wire.getDestinationPort().getPosition().y,
+                remainingWireLength);
+        } else {
+            // این خط را اضافه کنید
+            System.out.printf("FAILURE: Not enough wire. Needed: %d, Have: %d%n", wireLength, remainingWireLength);
         }
     }
     
@@ -142,105 +149,49 @@ public class Game {
         }
     }
     
+    // در Game.java
     private void checkPacketCollisions() {
         if (collisionDisabled) {
             return;
         }
-        
-        
+
+        List<Packet> allPackets = new ArrayList<>();
         for (Wire wire : wires) {
-            List<Packet> packets = wire.getPacketsOnWire();
-            
-            
-            for (int i = 0; i < packets.size(); i++) {
-                Packet packet1 = packets.get(i);
+            allPackets.addAll(wire.getPacketsOnWire());
+        }
+
+        for (int i = 0; i < allPackets.size(); i++) {
+            for (int j = i + 1; j < allPackets.size(); j++) {
+                Packet packet1 = allPackets.get(i);
+                Packet packet2 = allPackets.get(j);
+
+
+                if (Constants.DEBUG_COLLISIONS) {
+                    double distance = packet1.getPosition().distance(packet2.getPosition());
+                    int visualSize1 = packet1.getSize() * 6;
+                    int visualSize2 = packet2.getSize() * 6;
+                    int threshold = (visualSize1 / 2) + (visualSize2 / 2); 
+                    System.out.printf("Checking collision: P1-P2 | Distance: %.2f | Threshold: %d%n", distance, threshold);
+                }
                 
-                for (int j = i + 1; j < packets.size(); j++) {
-                    Packet packet2 = packets.get(j);
-                    
-                    if (packetsCollide(packet1, packet2)) {
-                        handleCollision(packet1, packet2);
-                    }
+                if (packetsCollide(packet1, packet2)) {
+                    handleCollision(packet1, packet2);
                 }
             }
         }
     }
     
+
     private boolean packetsCollide(Packet packet1, Packet packet2) {
         
-        Point pos1 = packet1.getPosition();
-        Point pos2 = packet2.getPosition();
-        
-        
-        if (arePacketsOnSameWire(packet1, packet2)) {
-            
-            
-            Port source1 = packet1.getSourcePort();
-            Port source2 = packet2.getSourcePort();
-            
-            
-            if (source1 == source2) {
-                
-                Wire wire = findWireContainingPacket(packet1);
-                if (wire != null) {
-                    Point wireEnd = wire.getDestinationPort().getPosition();
-                    
-                    
-                    double dx1 = wireEnd.x - pos1.x;
-                    double dy1 = wireEnd.y - pos1.y;
-                    
-                    
-                    double dx2 = wireEnd.x - pos2.x;
-                    double dy2 = wireEnd.y - pos2.y;
-                    
-                    
-                    double dotProduct = dx1 * dx2 + dy1 * dy2;
-                    
-                    if (dotProduct > 0) {
-                        
-                        
-                        double distance = Math.sqrt(
-                            Math.pow(pos2.x - pos1.x, 2) + 
-                            Math.pow(pos2.y - pos1.y, 2)
-                        );
-                        
-                        
-                        int reducedCollisionThreshold = (packet1.getSize() + packet2.getSize()) / 2;
-                        System.out.println("Same direction packets: Distance=" + distance + 
-                                          ", Threshold=" + reducedCollisionThreshold);
-                        return distance < reducedCollisionThreshold;
-                    }
-                }
-            }
-        }
-        
-        
-        int collisionThreshold = packet1.getSize() + packet2.getSize();
-        double distance = Math.sqrt(
-            Math.pow(pos2.x - pos1.x, 2) + 
-            Math.pow(pos2.y - pos1.y, 2)
-        );
-        
+        int visualSize1 = packet1.getSize() * 6;
+        int visualSize2 = packet2.getSize() * 6;
+
+        int collisionThreshold = visualSize1 / 2 + visualSize2 / 2; 
+
+        double distance = packet1.getPosition().distance(packet2.getPosition());
+
         return distance < collisionThreshold;
-    }
-    
-    private boolean arePacketsOnSameWire(Packet packet1, Packet packet2) {
-        for (Wire wire : wires) {
-            List<Packet> packets = wire.getPacketsOnWire();
-            if (packets.contains(packet1) && packets.contains(packet2)) {
-                return true;
-            }
-        }
-        return false;
-    }
-    
-    private Wire findWireContainingPacket(Packet packet) {
-        for (Wire wire : wires) {
-            if (wire.getPacketsOnWire().contains(packet)) {
-                return wire;
-            }
-        }
-        return null;
     }
     
     private void handleCollision(Packet packet1, Packet packet2) {
@@ -250,61 +201,29 @@ public class Game {
         
         if (Constants.DEBUG_COLLISIONS) {
             System.out.println("\n*** COLLISION DETECTED ***");
-            System.out.println("Packet 1: pos=" + packet1.getPosition().x + "," + packet1.getPosition().y + 
-                              " size=" + packet1.getSize() + " noise=" + packet1.getNoise());
-            System.out.println("Packet 2: pos=" + packet2.getPosition().x + "," + packet2.getPosition().y + 
-                              " size=" + packet2.getSize() + " noise=" + packet2.getNoise());
+            System.out.println("Packet 1: pos=" + packet1.getPosition() + " size=" + packet1.getSize() + " noise=" + packet1.getNoise());
+            System.out.println("Packet 2: pos=" + packet2.getPosition() + " size=" + packet2.getSize() + " noise=" + packet2.getNoise());
         }
         
-        
         SoundManager.getInstance().playSound("collision");
-        
         
         Point collisionPoint = new Point(
             (packet1.getPosition().x + packet2.getPosition().x) / 2,
             (packet1.getPosition().y + packet2.getPosition().y) / 2
         );
         
-        
-        if (packet1.getNoise() + Constants.IMPACT_NOISE_AMOUNT >= packet1.getSize() &&
-            packet2.getNoise() + Constants.IMPACT_NOISE_AMOUNT >= packet2.getSize()) {
-            
-            if (Math.random() < 0.5) {
-                
-                packet1.addNoise(Constants.IMPACT_NOISE_AMOUNT);
-                packet2.addNoise(Math.max(0, packet2.getSize() - packet2.getNoise() - 1));
-                if (Constants.DEBUG_COLLISIONS) {
-                    System.out.println("Reduced noise for packet 2 to prevent simultaneous loss");
-                }
-            } else {
-                
-                packet2.addNoise(Constants.IMPACT_NOISE_AMOUNT);
-                packet1.addNoise(Math.max(0, packet1.getSize() - packet1.getNoise() - 1));
-                if (Constants.DEBUG_COLLISIONS) {
-                    System.out.println("Reduced noise for packet 1 to prevent simultaneous loss");
-                }
-            }
-        } else {
-            
-            packet1.addNoise(Constants.IMPACT_NOISE_AMOUNT);
-            packet2.addNoise(Constants.IMPACT_NOISE_AMOUNT);
-            if (Constants.DEBUG_COLLISIONS) {
-                System.out.println("Added normal impact noise to both packets");
-            }
-        }
-        
+        packet1.addNoise(Constants.IMPACT_NOISE_AMOUNT);
+        packet2.addNoise(Constants.IMPACT_NOISE_AMOUNT);
+
         if (Constants.DEBUG_COLLISIONS) {
             System.out.println("After collision - Packet 1: noise=" + packet1.getNoise());
             System.out.println("After collision - Packet 2: noise=" + packet2.getNoise());
         }
         
-        
         checkPacketLoss(packet1);
         checkPacketLoss(packet2);
         
-        
         applyImpactToNearbyPackets(collisionPoint, Constants.IMPACT_RADIUS);
-        
         
         forceUpdatePacketLoss();
         

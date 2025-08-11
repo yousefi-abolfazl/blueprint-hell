@@ -107,7 +107,6 @@ public class Wire {
                               ", isMoving: " + packet.isMoving() + ", speed: " + packet.getCurrentSpeed());
             }
             
-            Point packetPos = packet.getPosition();
             
             if (packet.isLost()) {
                 if (Constants.DEBUG_PACKET_LOSS) {
@@ -126,7 +125,7 @@ public class Wire {
                 System.out.println("  Distance to destination: " + distanceToTarget);
             }
             
-            if (distanceToTarget < 10) {
+            if (distanceToTarget < 5) {
                 if (Constants.DEBUG_PACKET_MOVEMENT) {
                     System.out.println("  PACKET REACHED DESTINATION!");
                 }
@@ -136,9 +135,6 @@ public class Wire {
             }
         }
         
-        if (Constants.DEBUG_PACKET_MOVEMENT && !packetsOnWire.isEmpty()) {
-            System.out.println("----- WIRE UPDATE COMPLETE: " + packetsOnWire.size() + " packets remain -----\n");
-        }
     }
     
     public boolean isPointNearWire(Point point, int threshold) {

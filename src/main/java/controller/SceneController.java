@@ -37,14 +37,12 @@ public class SceneController {
     }
     
     private void updateGame() {
+
         Game game = Game.getInstance();
         GamePanel panel = GamePanel.getInstance();
 
-        // از GamePanel بپرسید که آیا بازی در حال اجراست؟
         if (panel.isGameRunning() && !game.isPaused()) {
          
-         // به‌روزرسانی تمام سیستم‌ها و سیم‌ها
-         // (این منطق قبلاً در تایمر GamePanel بود)
             for (NetworkSystem system : game.getSystems()) {
                 system.update();
             }
@@ -52,21 +50,17 @@ public class SceneController {
                 wire.update();
             }
 
-            // به‌روزرسانی وضعیت کلی بازی (برخوردها، GameOver)
             game.update();
          
-            // به‌روزرسانی نمایشگرهای اطلاعات (HUD)
             panel.updateHUD();
          
-            // درخواست بازрисовى از پنل بازی
             panel.repaint();
             
-            // بررسی وضعیت‌های پایانی بازی
             if (game.isGameOver()) {
-                panel.setGameRunning(false); // متوقف کردن بازی
+                panel.setGameRunning(false);
                 showGameOver();
-            } else if (isLevelComplete()) { // متد isLevelComplete را هم چک کنید
-                panel.setGameRunning(false); // متوقف کردن بازی
+            } else if (isLevelComplete()) {
+                panel.setGameRunning(false);
                 showLevelComplete();
             }
         }
@@ -120,7 +114,6 @@ public class SceneController {
     private void forceFocusWithDelay(GamePanel panel, int delay) {
         Timer timer = new Timer(delay, e -> {
             System.out.println("Forcing focus after " + delay + "ms delay");
-            panel.forceFocus();
             ((Timer)e.getSource()).stop();
         });
         timer.setRepeats(false);
@@ -202,5 +195,11 @@ public class SceneController {
         ShopView shopView = new ShopView(GameFrame.getINSTANCE());
         shopView.setVisible(true);
         Game.getInstance().setPaused(false);
+    }
+
+    public void returnToMainMenu() {
+        GamePanel.getInstance().setGameRunning(false);
+        SoundManager.getInstance().stopBackgroundMusic();
+        showMainMenu();
     }
 }

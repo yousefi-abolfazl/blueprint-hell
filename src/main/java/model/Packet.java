@@ -107,71 +107,43 @@ public abstract class Packet {
     }
     
     public void update() {
-        if (!isMoving) return;
-        
-        
-        if (targetPosition == null) {
-            System.out.println("ERROR: Packet is moving but target position is null!");
-            stopMoving();
+        if (!isMoving || targetPosition == null) {
             return;
         }
-        
-        
-        if (isAccelerating) {
-            currentSpeed = Math.min(maxSpeed, currentSpeed + acceleration);
-        } else {
-            currentSpeed = Math.max(0, currentSpeed - deceleration);
+
+        // سرعت حرکت را بر اساس نوع پورت مبدأ تعیین کنید (این منطق شماست و خوب است)
+        boolean compatibleStart = (sourcePort != null && isCompatibleWithPort(sourcePort));
+        double effectiveSpeed = maxSpeed;
+
+        if (this instanceof SquarePacket && compatibleStart) {
+            effectiveSpeed = maxSpeed / 2.0;
         }
+        // برای پکت مثلثی، طبق داک، اگر ناسازگار باشد شتاب‌دار است. فعلاً برای سادگی با سرعت ثابت حرکت می‌دهیم.
+        // اگر سازگار باشد، با سرعت ثابت حرکت می‌کند.
         
-        
-        if (currentSpeed < 0.5) {
-            currentSpeed = 0.5;
-            System.out.println("Increasing packet speed to minimum threshold");
-        }
-        
-        
-        double moveDistance = currentSpeed;
-        
-        
+        // محاسبه بردار جهت
         double dx = targetPosition.x - position.x;
         double dy = targetPosition.y - position.y;
         double distance = Math.sqrt(dx * dx + dy * dy);
-        
-        
-        if (distance <= moveDistance) {
-            
+
+        // اگر به مقصد رسیده‌ایم
+        if (distance <= effectiveSpeed) {
             position = new Point(targetPosition);
             stopMoving();
-            System.out.println("Packet arrived at destination");
+            System.out.println("Packet " + this.getClass().getSimpleName() + " arrived at destination.");
             return;
         }
+
+        // حرکت به سمت هدف
+        double moveX = (dx / distance) * effectiveSpeed;
+        double moveY = (dy / distance) * effectiveSpeed;
+
+        position.x += moveX;
+        position.y += moveY;
         
-        
-        dx = (dx / distance);
-        dy = (dy / distance);
-        
-        
-        int newX = position.x + (int)(dx * moveDistance);
-        int newY = position.y + (int)(dy * moveDistance);
-        
-        
-        if (newX == position.x && newY == position.y) {
-            
-            currentSpeed += 0.5;
-            moveDistance = currentSpeed;
-            newX = position.x + (int)(dx * moveDistance);
-            newY = position.y + (int)(dy * moveDistance);
-            System.out.println("Packet was stuck, increasing speed to: " + currentSpeed);
-        }
-        
-        
-        position = new Point(newX, newY);
-        
-        
-        System.out.println("Packet moved to: " + position.x + "," + position.y + 
-                          " (speed=" + currentSpeed + ", distance to target=" + 
-                          Math.sqrt(Math.pow(targetPosition.x - position.x, 2) + 
-                                   Math.pow(targetPosition.y - position.y, 2)) + ")");
+        // لاگ برای دیباگ
+        System.out.printf("Packet moved: %s, Pos: (%d, %d), Speed: %.2f, TargetDist: %.2f%n",
+            this.getClass().getSimpleName(), position.x, position.y, effectiveSpeed, distance);
     }
     
     public void stopMoving() {

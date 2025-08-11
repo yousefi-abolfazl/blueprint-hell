@@ -105,6 +105,7 @@ public class TrianglePacket extends Packet {
     
     @Override
     public void startMoving(Point target) {
+        System.out.println("TrianglePacket startMoving called. Target: " + target);
         super.startMoving(target);
         
         
@@ -134,30 +135,32 @@ public class TrianglePacket extends Packet {
         System.out.println("Triangle packet starting to move (overloaded) with speed: " + this.currentSpeed + ", accelerating: " + this.isAccelerating);
     }
     
-    @Override
-    public void update() {
-        if (!isMoving) return;
+    // @Override
+    // public void update() {
+    //     System.out.println("Updating TrianglePacket. isMoving: " +
+    //      isMoving + ", Position: " + getPosition());
+    //     if (!isMoving) return;
         
         
-        if (targetPosition != null) {
+    //     // if (targetPosition != null) {
             
-            double distance = Math.sqrt(
-                Math.pow(targetPosition.x - position.x, 2) +
-                Math.pow(targetPosition.y - position.y, 2)
-            );
+    //     //     double distance = Math.sqrt(
+    //     //         Math.pow(targetPosition.x - position.x, 2) +
+    //     //         Math.pow(targetPosition.y - position.y, 2)
+    //     //     );
             
             
-            if (distance > 100 && currentSpeed < 1.0) {
-                currentSpeed = Math.min(maxSpeed, currentSpeed + 0.1);
-            }
-        }
+    //     //     if (distance > 100 && currentSpeed < 1.0) {
+    //     //         currentSpeed = Math.min(maxSpeed, currentSpeed + 0.1);
+    //     //     }
+    //     // }
         
         
-        super.update();
+    //     super.update();
         
         
-        if (isMoving && currentSpeed < 0.5) {
-            currentSpeed = 0.5;
-        }
-    }
+    //     if (isMoving && currentSpeed < 0.5) {
+    //         currentSpeed = 0.5;
+    //     }
+    // }
 } 

@@ -1,14 +1,13 @@
 package view;
 
 import controller.Constants;
+import controller.SceneController;
 import controller.SoundManager;
 import model.*;
-
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.ArrayList;
-import java.util.List;
+
 
 public class GamePanel extends JPanel {
     private static GamePanel INSTANCE;
@@ -38,20 +37,6 @@ public class GamePanel extends JPanel {
         
         initializeHUD();
         initializeControls();
-        
-        
-        addFocusListener(new FocusAdapter() {
-            @Override
-            public void focusGained(FocusEvent e) {
-                System.out.println("GamePanel gained focus");
-            }
-            
-            @Override
-            public void focusLost(FocusEvent e) {
-                System.out.println("GamePanel lost focus");
-            }
-        });
-        
         
         InputMap inputMap = getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
         ActionMap actionMap = getActionMap();
@@ -114,6 +99,15 @@ public class GamePanel extends JPanel {
                 System.out.println("H key pressed via key binding");
                 toggleHUD();
                 repaint();
+            }
+        });
+
+        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), "returnToMenu");
+        actionMap.put("returnToMenu", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                System.out.println("Escape key pressed - returning to main menu.");
+                SceneController.getInstance().returnToMainMenu();
             }
         });
     }
@@ -202,7 +196,8 @@ public class GamePanel extends JPanel {
                     int wireLength = newWire.getLength();
                     
                     if (wireLength <= game.getRemainingWireLength()) {
-                        game.addWire(newWire);
+                        // game.addWire(newWire);
+                        Game.getInstance().addWire(newWire); 
                         updateHUD();
                         SoundManager.getInstance().playSound("connection");
                         System.out.println("Wire connected successfully! Length: " + wireLength);
@@ -214,6 +209,7 @@ public class GamePanel extends JPanel {
                 }
                 
                 selectedPort = null;
+                repaint();
             }
         });
         
@@ -319,72 +315,60 @@ public class GamePanel extends JPanel {
     }
     
     private void setupLevel1() {
+        int width = getWidth();
+        int height = getHeight();
         
+        int padding = 200;
         int systemWidth = 100;
         int systemHeight = 80;
+
+
+        SourceSystem sourceTL = new SourceSystem(
+            new Point(padding, padding), systemWidth, systemHeight, 80, true);
+        sourceTL.addOutputPort(new SquarePort(
+            new Point(sourceTL.getPosition().x + systemWidth, sourceTL.getPosition().y + 40), false, sourceTL));
+        game.addSystem(sourceTL);
+
+        SourceSystem sourceTR = new SourceSystem(
+            new Point(width - padding - systemWidth, padding), systemWidth, systemHeight, 90, false);
+        sourceTR.addOutputPort(new TrianglePort(
+            new Point(sourceTR.getPosition().x, sourceTR.getPosition().y + 40), false, sourceTR));
+        game.addSystem(sourceTR);
+
+        SourceSystem sourceBL = new SourceSystem(
+            new Point(padding, height - padding - systemHeight), systemWidth, systemHeight, 90, false);
+        sourceBL.addOutputPort(new TrianglePort(
+            new Point(sourceBL.getPosition().x + systemWidth, sourceBL.getPosition().y + 40), false, sourceBL));
+        game.addSystem(sourceBL);
+
+        SourceSystem sourceBR = new SourceSystem(
+            new Point(width - padding - systemWidth, height - padding - systemHeight), systemWidth, systemHeight, 80, true);
+        sourceBR.addOutputPort(new SquarePort(
+            new Point(sourceBR.getPosition().x, sourceBR.getPosition().y + 40), false, sourceBR));
+        game.addSystem(sourceBR);
+
+
+
+        StandardSystem transitTop = new StandardSystem(
+            new Point(width / 2 - (systemWidth / 2), height / 2 - padding), systemWidth, systemHeight);
+        transitTop.addInputPort(new SquarePort(new Point(transitTop.getPosition().x, transitTop.getPosition().y + 20), true, transitTop));
+        transitTop.addInputPort(new TrianglePort(new Point(transitTop.getPosition().x + systemWidth, transitTop.getPosition().y + 20), true, transitTop));
+        transitTop.addOutputPort(new SquarePort(new Point(transitTop.getPosition().x + 50, transitTop.getPosition().y + systemHeight), false, transitTop));
+        game.addSystem(transitTop);
         
-        
-        SourceSystem source1 = new SourceSystem(
-            new Point(100, 200), 
-            systemWidth, 
-            systemHeight, 
-            60, 
-            true 
-        );
-        
-        
-        SquarePort sourcePort1 = new SquarePort(
-            new Point(100 + systemWidth, 220),
-            false, 
-            source1
-        );
-        source1.addOutputPort(sourcePort1);
-        
-        
-        game.addSystem(source1);
-        
-        
-        StandardSystem system1 = new StandardSystem(
-            new Point(300, 200),
-            systemWidth,
-            systemHeight
-        );
-        
-        
-        SquarePort system1InputPort = new SquarePort(
-            new Point(300, 220),
-            true,
-            system1
-        );
-        SquarePort system1OutputPort = new SquarePort(
-            new Point(300 + systemWidth, 220),
-            false,
-            system1
-        );
-        
-        system1.addInputPort(system1InputPort);
-        system1.addOutputPort(system1OutputPort);
-        
-        
-        game.addSystem(system1);
-        
-        
-        DestinationSystem dest1 = new DestinationSystem(
-            new Point(500, 200),
-            systemWidth,
-            systemHeight
-        );
-        
-        
-        SquarePort destPort1 = new SquarePort(
-            new Point(500, 220),
-            true,
-            dest1
-        );
-        dest1.addInputPort(destPort1);
-        
-        
-        game.addSystem(dest1);
+        StandardSystem transitBottom = new StandardSystem(
+            new Point(width / 2 - (systemWidth / 2), height / 2 + padding - systemHeight), systemWidth, systemHeight);
+        transitBottom.addInputPort(new TrianglePort(new Point(transitBottom.getPosition().x, transitBottom.getPosition().y + 20), true, transitBottom));
+        transitBottom.addInputPort(new SquarePort(new Point(transitBottom.getPosition().x + systemWidth, transitBottom.getPosition().y + 20), true, transitBottom));
+        transitBottom.addOutputPort(new TrianglePort(new Point(transitBottom.getPosition().x + 50, transitBottom.getPosition().y), false, transitBottom));
+        game.addSystem(transitBottom);
+
+
+        DestinationSystem destination = new DestinationSystem(
+            new Point(width / 2 - (systemWidth / 2), height / 2 - (systemHeight / 2)), systemWidth, systemHeight);
+        destination.addInputPort(new SquarePort(new Point(destination.getPosition().x + 20, destination.getPosition().y), true, destination));
+        destination.addInputPort(new TrianglePort(new Point(destination.getPosition().x + 80, destination.getPosition().y + systemHeight), true, destination));
+        game.addSystem(destination);
     }
     
     private void setupLevel2() {
@@ -523,7 +507,9 @@ public class GamePanel extends JPanel {
     }
     
     private void toggleGameRunning() {
-        System.out.println("Toggle game running called. Current state: " + isGameRunning);
+        System.out.println("--- toggleGameRunning called! Changing isGameRunning from " +
+                isGameRunning + " to " + 
+                !isGameRunning + " ---");
         isGameRunning = !isGameRunning;
 
         if (isGameRunning) {
@@ -674,6 +660,7 @@ public class GamePanel extends JPanel {
     }
 
     public void setGameRunning(boolean isRunning) {
+        System.out.println("!!! setGameRunning called! New value: " + isRunning);
         this.isGameRunning = isRunning;
     }
     
