@@ -44,7 +44,6 @@ public class GamePanel extends JPanel {
             @Override
             public void focusGained(FocusEvent e) {
                 System.out.println("GamePanel gained focus");
-                repaint(); 
             }
             
             @Override
@@ -117,55 +116,8 @@ public class GamePanel extends JPanel {
                 repaint();
             }
         });
-        
-        
-        
-        SwingUtilities.invokeLater(this::forceFocus);
     }
     
-    
-    public void forceFocus() {
-        System.out.println("Forcing focus on GamePanel");
-        requestFocusInWindow();
-        requestFocus();
-        
-        
-        SwingUtilities.invokeLater(() -> {
-            System.out.println("Requesting focus in invoke later");
-            requestFocusInWindow();
-            requestFocus();
-            
-            
-            KeyboardFocusManager.getCurrentKeyboardFocusManager()
-                .clearGlobalFocusOwner();
-            requestFocusInWindow();
-            
-            
-            Window window = SwingUtilities.getWindowAncestor(this);
-            if (window != null) {
-                window.toFront();
-            }
-        });
-        
-        
-        Timer focusTimer = new Timer(500, e -> {
-            if (!hasFocus()) {
-                System.out.println("GamePanel doesn't have focus - requesting again");
-                requestFocusInWindow();
-                requestFocus();
-                
-                
-                KeyboardFocusManager.getCurrentKeyboardFocusManager()
-                    .clearGlobalFocusOwner();
-                requestFocusInWindow();
-            } else {
-                System.out.println("GamePanel has focus!");
-                ((Timer)e.getSource()).stop();
-            }
-        });
-        focusTimer.setRepeats(true);
-        focusTimer.start();
-    }
     
     private void initializeHUD() {
         wireLabel = createHUDLabel("Wire: " + game.getRemainingWireLength());
@@ -280,44 +232,6 @@ public class GamePanel extends JPanel {
                 }
             }
         });
-        
-        
-        addKeyListener(new KeyAdapter() {
-            @Override
-            public void keyPressed(KeyEvent e) {
-                System.out.println("Key pressed: " + KeyEvent.getKeyText(e.getKeyCode()) + " (code: " + e.getKeyCode() + ")");
-                switch (e.getKeyCode()) {
-                    case KeyEvent.VK_RIGHT:
-                        System.out.println("Right arrow pressed - attempting to advance time");
-                        if (!isGameRunning) game.advanceTime();
-                        break;
-                    case KeyEvent.VK_LEFT:
-                        System.out.println("Left arrow pressed - attempting to rewind time");
-                        if (!isGameRunning) game.rewindTime();
-                        break;
-                    case KeyEvent.VK_SPACE:
-                        System.out.println("Space pressed - attempting to toggle game running");
-                        toggleGameRunning();
-                        break;
-                    case KeyEvent.VK_H:
-                        System.out.println("H pressed - attempting to toggle HUD");
-                        toggleHUD();
-                        break;
-                    case KeyEvent.VK_ESCAPE:
-                        System.out.println("Escape pressed - checking game running status");
-                        if (isGameRunning) {
-                            isGameRunning = false;
-                        }
-                        break;
-                    case KeyEvent.VK_S:
-                        System.out.println("S pressed - attempting to show shop");
-                        showShop();
-                        break;
-                }
-                updateHUD();
-                repaint();
-            }
-        });
     }
     
     private void showShop() {
@@ -329,8 +243,6 @@ public class GamePanel extends JPanel {
             
             isGameRunning = false;
         }
-        
-        
         game.setPaused(true);
         
         
@@ -342,11 +254,7 @@ public class GamePanel extends JPanel {
             public void windowClosed(java.awt.event.WindowEvent e) {
                 System.out.println("Shop closed, returning focus to GamePanel");
                 
-                
                 requestFocusInWindow();
-                forceFocus();
-                
-                
                 if (wasRunning) {
                     isGameRunning = true;
                 }
